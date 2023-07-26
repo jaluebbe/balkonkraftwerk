@@ -42,7 +42,7 @@ while True:
         _required += _consumer["power"]
         _report["temporary_consumers"].append(_consumer)
     for _id in producer_inverters:
-        _data = ahoy_dtu.request_inverter_data(_id, host="192.168.12.87")
+        _data = ahoy_dtu.request_inverter_data(_id, host=ahoy_dtu_host)
         if (
             _data is not None
             and time.time() - _data["ts_last_success"] < inverter_timeout
@@ -80,14 +80,14 @@ while True:
         _required_limit -= _new_inverter_limit
         if (
             ahoy_dtu.set_inverter_limit(
-                _id, _new_inverter_limit, host="192.168.12.87"
+                _id, _new_inverter_limit, host=ahoy_dtu_host
             )
             is None
         ):
             print(
                 f"Problem setting the inverter limit of {_new_inverter_limit}W."
             )
-        _data = ahoy_dtu.request_inverter_data(_id, host="192.168.12.87")
+        _data = ahoy_dtu.request_inverter_data(_id, host=ahoy_dtu_host)
         if (
             _data is not None
             and time.time() - _data["ts_last_success"] < inverter_timeout
