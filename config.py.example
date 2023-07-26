@@ -1,0 +1,23 @@
+min_power = 35
+min_inverter_limit = 6
+max_inverter_limit = 240
+ahoy_dtu_host = "ahoy-dtu"
+consumers = [
+    "192.168.1.100",  # fridge
+    "192.168.1.101",  # TV
+    "192.168.1.102",  # PC
+]
+temporary_consumers = [
+    {"from": "18:00", "until": "00:00", "power": 15, "name": "NAS"},
+    {
+        "from": "10:00",
+        "until": "18:00",
+        "power": 15,
+        "name": "NAS",
+        "days": ["Sat", "Sun"],
+    },
+]
+producer_inverters = [1]
+battery_inverters = [0]
+interval = 15
+inverter_timeout = 300
