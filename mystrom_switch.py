@@ -1,8 +1,9 @@
+from __future__ import annotations
 import logging
 import requests
 
 
-def read_switch(host):
+def read_switch(host: str) -> dict | None:
     url = f"http://{host}/report"
     try:
         response = requests.get(url)
