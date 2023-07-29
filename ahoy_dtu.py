@@ -65,6 +65,9 @@ def set_inverter_limit(
     except requests.exceptions.ConnectTimeout:
         logging.error(f"Connection to {url} timed out.")
         return
+    except requests.exceptions.ReadTimeout:
+        logging.error(f"Read from {url} timed out.")
+        return
     if response.status_code == 200:
         return response.json()
 
@@ -78,6 +81,9 @@ def enable_inverter(id, host="ahoy-dtu"):
     except requests.exceptions.ConnectTimeout:
         logging.error(f"Connection to {url} timed out.")
         return
+    except requests.exceptions.ReadTimeout:
+        logging.error(f"Read from {url} timed out.")
+        return
     if response.status_code == 200:
         return response.json()
 
@@ -90,6 +96,9 @@ def disable_inverter(id, host="ahoy-dtu"):
         )
     except requests.exceptions.ConnectTimeout:
         logging.error(f"Connection to {url} timed out.")
+        return
+    except requests.exceptions.ReadTimeout:
+        logging.error(f"Read from {url} timed out.")
         return
     if response.status_code == 200:
         return response.json()
