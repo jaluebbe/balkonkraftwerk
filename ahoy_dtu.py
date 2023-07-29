@@ -1,7 +1,7 @@
 import logging
 import requests
 
-ac_labels = [
+AC_LABELS = [
     "U_AC",
     "I_AC",
     "P_AC",
@@ -14,13 +14,13 @@ ac_labels = [
     "Efficiency",
     "Q_AC",
 ]
-dc_labels = ["U_DC", "I_DC", "P_DC", "YieldDay", "YieldTotal", "Irradiation"]
-ac_units = ["V", "A", "W", "Hz", "", "\u00b0C", "kWh", "Wh", "W", "%", "var"]
-dc_units = ["V", "A", "W", "Wh", "kWh", "%"]
+DC_LABELS = ["U_DC", "I_DC", "P_DC", "YieldDay", "YieldTotal", "Irradiation"]
+AC_UNITS = ["V", "A", "W", "Hz", "", "\u00b0C", "kWh", "Wh", "W", "%", "var"]
+DC_UNITS = ["V", "A", "W", "Wh", "kWh", "%"]
+AHOY_HOST = "ahoy-dtu"
 
 
-def request_inverter_data(id, host="ahoy-dtu"):
-    url = f"http://{host}/api/inverter/id/{id}"
+def _request_data(url: str) -> dict | None:
     try:
         response = requests.get(url, timeout=1.1)
     except requests.exceptions.ConnectTimeout:
@@ -30,25 +30,47 @@ def request_inverter_data(id, host="ahoy-dtu"):
         logging.error(f"Read from {url} timed out.")
         return
     if response.status_code == 200:
-        data = response.json()
-        if data is None:
-            logging.warning(f"Data for inverter {id} is None.")
-            return
-        ac_data, dc_data = data.pop("ch")
-        data["ac_data"] = {
-            _label: {"value": _data, "unit": _unit}
-            for _label, _data, _unit in zip(ac_labels, ac_data, ac_units)
-        }
-        data["dc_data"] = {
-            _label: {"value": _data, "unit": _unit}
-            for _label, _data, _unit in zip(dc_labels, dc_data, dc_units)
-        }
-        return data
+        return response.json()
+
+
+def _send_command(url: str, payload: dict) -> dict | None:
+    try:
+        response = requests.post(url, json=payload, timeout=1.1)
+    except requests.exceptions.ConnectTimeout:
+        logging.error(f"Connection to {url} timed out.")
+        return
+    except requests.exceptions.ReadTimeout:
+        logging.error(f"Read from {url} timed out.")
+        return
+    if response.status_code == 200:
+        return response.json()
+
+
+def request_inverter_data(id: int, host=AHOY_HOST) -> dict | None:
+    url = f"http://{host}/api/inverter/id/{id}"
+    data = _request_data(url)
+    if data is None:
+        logging.warning(f"Data for inverter {id} is None.")
+        return
+    ac_data, dc_data = data.pop("ch")
+    data["ac_data"] = {
+        _label: {"value": _data, "unit": _unit}
+        for _label, _data, _unit in zip(AC_LABELS, ac_data, AC_UNITS)
+    }
+    data["dc_data"] = {
+        _label: {"value": _data, "unit": _unit}
+        for _label, _data, _unit in zip(DC_LABELS, dc_data, DC_UNITS)
+    }
+    return data
 
 
 def set_inverter_limit(
-    id, power_limit, persistent=False, absolute=True, host="ahoy-dtu"
-):
+    id: int,
+    power_limit: float,
+    persistent: bool = False,
+    absolute: bool = True,
+    host: str = AHOY_HOST,
+) -> dict | None:
     if persistent and absolute:
         cmd = "limit_persistent_absolute"
     elif persistent and not absolute:
@@ -58,47 +80,17 @@ def set_inverter_limit(
     else:
         cmd = "limit_nonpersistent_relative"
     url = f"http://{host}/api/ctrl"
-    try:
-        response = requests.post(
-            url, json={"id": id, "cmd": cmd, "val": power_limit}, timeout=1.1
-        )
-    except requests.exceptions.ConnectTimeout:
-        logging.error(f"Connection to {url} timed out.")
-        return
-    except requests.exceptions.ReadTimeout:
-        logging.error(f"Read from {url} timed out.")
-        return
-    if response.status_code == 200:
-        return response.json()
+    payload = {"id": id, "cmd": cmd, "val": power_limit}
+    return _send_command(url, payload)
 
 
-def enable_inverter(id, host="ahoy-dtu"):
+def enable_inverter(id: int, host: str = AHOY_HOST) -> dict | None:
     url = f"http://{host}/api/ctrl"
-    try:
-        response = requests.post(
-            url, json={"id": id, "cmd": cmd, "val": 1}, timeout=1.1
-        )
-    except requests.exceptions.ConnectTimeout:
-        logging.error(f"Connection to {url} timed out.")
-        return
-    except requests.exceptions.ReadTimeout:
-        logging.error(f"Read from {url} timed out.")
-        return
-    if response.status_code == 200:
-        return response.json()
+    payload = {"id": id, "cmd": cmd, "val": 1}
+    return _send_command(url, payload)
 
 
-def disable_inverter(id, host="ahoy-dtu"):
+def disable_inverter(id: int, host: str = AHOY_HOST) -> dict | None:
     url = f"http://{host}/api/ctrl"
-    try:
-        response = requests.post(
-            url, json={"id": id, "cmd": cmd, "val": 0}, timeout=1.1
-        )
-    except requests.exceptions.ConnectTimeout:
-        logging.error(f"Connection to {url} timed out.")
-        return
-    except requests.exceptions.ReadTimeout:
-        logging.error(f"Read from {url} timed out.")
-        return
-    if response.status_code == 200:
-        return response.json()
+    payload = {"id": id, "cmd": cmd, "val": 0}
+    return _send_command(url, payload)
