@@ -83,15 +83,13 @@ while True:
             min_inverter_limit, min(max_inverter_limit, _required)
         )
         _required_limit -= _new_inverter_limit
-        if (
-            open_dtu.set_inverter_limit(
-                host=open_dtu_host,
-                password=open_dtu_password,
-                serial=_serial,
-                power_limit=_new_inverter_limit,
-            )
-            is None
-        ):
+        _response = open_dtu.set_inverter_limit(
+            host=open_dtu_host,
+            password=open_dtu_password,
+            serial=_serial,
+            power_limit=_new_inverter_limit,
+        )
+        if _response is None:
             print(
                 f"Problem setting the inverter limit of {_new_inverter_limit}W."
             )
