@@ -87,11 +87,11 @@ def set_inverter_limit(
 
 def enable_inverter(id: int, host: str = AHOY_HOST) -> dict | None:
     url = f"http://{host}/api/ctrl"
-    payload = {"id": id, "cmd": cmd, "val": 1}
+    payload = {"id": id, "cmd": "power", "val": 1}
     return _send_command(url, payload)
 
 
 def disable_inverter(id: int, host: str = AHOY_HOST) -> dict | None:
     url = f"http://{host}/api/ctrl"
-    payload = {"id": id, "cmd": cmd, "val": 0}
+    payload = {"id": id, "cmd": "power", "val": 0}
     return _send_command(url, payload)
