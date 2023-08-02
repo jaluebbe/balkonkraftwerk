@@ -2,6 +2,8 @@ min_power = 35
 min_inverter_limit = 6
 max_inverter_limit = 240
 ahoy_dtu_host = "ahoy-dtu"
+open_dtu_host = "open-dtu"
+open_dtu_password = "openDTU42"
 consumers = [
     "192.168.1.100",  # fridge
     "192.168.1.101",  # TV
@@ -19,5 +21,7 @@ temporary_consumers = [
 ]
 producer_inverters = [1]
 battery_inverters = [0]
+producer_inverter_serials = []
+battery_inverter_serials = []
 interval = 15
 inverter_timeout = 300
