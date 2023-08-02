@@ -22,7 +22,11 @@ def _request_data(url: str) -> dict | None:
 def _send_command(url: str, password: str, payload: dict) -> dict | None:
     try:
         response = requests.post(
-            url, auth=("admin", password), json=payload, timeout=1.1
+            url,
+            auth=("admin", password),
+            data=payload,
+            timeout=1.1,
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
     except requests.exceptions.ConnectTimeout:
         logging.error(f"Connection to {url} timed out.")
@@ -71,27 +75,26 @@ def set_inverter_limit(
     else:
         limit_type = 1
     url = f"http://{host}/api/limit/config"
-    payload = {
-        "serial": serial,
-        "limit_type": limit_type,
-        "limit_value": power_limit,
-    }
+    payload = (
+        f'data={{"serial":"{serial}", "limit_type":{limit_type}, '
+        f'"limit_value":{power_limit:.0f}}}'
+    )
     return _send_command(url, password, payload)
 
 
 def enable_inverter(host: str, password: str, serial: str) -> dict | None:
     url = f"http://{host}/api/power/config"
-    payload = {"serial": serial, "power": True}
+    payload = f'data={{"serial":"{serial}", "power": true}}'
     return _send_command(url, password, payload)
 
 
 def disable_inverter(host: str, password: str, serial: str) -> dict | None:
     url = f"http://{host}/api/power/config"
-    payload = {"serial": serial, "power": False}
+    payload = f'data={{"serial":"{serial}", "power": false}}'
     return _send_command(url, password, payload)
 
 
 def restart_inverter(host: str, password: str, serial: str) -> dict | None:
     url = f"http://{host}/api/power/config"
-    payload = {"serial": serial, "restart": True}
+    payload = f'data={{"serial":"{serial}", "restart": true}}'
     return _send_command(url, password, payload)
