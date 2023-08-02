@@ -47,7 +47,7 @@ def _send_command(url: str, payload: dict) -> dict | None:
         return response.json()
 
 
-def request_inverter_data(id: int, host=AHOY_HOST) -> dict | None:
+def request_inverter_data(id: int, host: str = AHOY_HOST) -> dict | None:
     url = f"http://{host}/api/inverter/id/{id}"
     data = _request_data(url)
     if data is None:
