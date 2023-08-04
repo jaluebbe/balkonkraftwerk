@@ -5,7 +5,7 @@ import requests
 
 def _request_data(url: str) -> dict | None:
     try:
-        response = requests.get(url, timeout=1.1)
+        response = requests.get(url, timeout=3.1)
     except requests.exceptions.ConnectTimeout:
         logging.error(f"Connection to {url} timed out.")
         return
@@ -25,7 +25,7 @@ def _send_command(url: str, password: str, payload: dict) -> dict | None:
             url,
             auth=("admin", password),
             data=payload,
-            timeout=1.1,
+            timeout=3.1,
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
     except requests.exceptions.ConnectTimeout:
@@ -38,24 +38,17 @@ def _send_command(url: str, password: str, payload: dict) -> dict | None:
         return response.json()
 
 
-def request_inverter_data(host: str, serial: str = None) -> list | None:
+def request_inverter_data(host: str) -> dict:
     url = f"http://192.168.12.91/api/livedata/status"
     data = _request_data(url)
     if data is None:
         logging.warning("Open DTU data is None.")
-        return
+        return {}
     inverters = data.get("inverters")
     if inverters is None:
         logging.warning("No data for inverters available.")
-        return
-    if serial is None:
-        return inverters
-    else:
-        return [
-            _inverter
-            for _inverter in inverters
-            if _inverter["serial"] == serial
-        ]
+        return {}
+    return {_inverter["serial"]: _inverter for _inverter in inverters}
 
 
 def set_inverter_limit(
