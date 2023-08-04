@@ -78,6 +78,10 @@ while True:
             print(f"Readout of {_id} failed.")
     _required_limit = _required
     for _serial in battery_inverter_serials:
+        _new_inverter_limit = max(
+            min_inverter_limit, min(max_inverter_limit, _required)
+        )
+        _required_limit -= _new_inverter_limit
         _inverter = _inverters.get(_serial)
         if _inverter is None:
             print(f"Readout of {_serial} failed.")
@@ -91,10 +95,6 @@ while True:
         _dc_current = _inverter["DC"]["0"]["Current"]["v"]
         _inverter_limit = _inverter["limit_absolute"]
         _required -= _ac_power
-        _new_inverter_limit = max(
-            min_inverter_limit, min(max_inverter_limit, _required)
-        )
-        _required_limit -= _new_inverter_limit
         _report["battery_inverters"].append(
             {
                 "ac_power": _ac_power,
@@ -105,17 +105,17 @@ while True:
                 "new_inverter_limit": round(_new_inverter_limit, 0),
             }
         )
-
-        _response = open_dtu.set_inverter_limit(
-            host=open_dtu_host,
-            password=open_dtu_password,
-            serial=_serial,
-            power_limit=_new_inverter_limit,
-        )
-        if _response is None:
-            print(
-                f"Problem setting the inverter limit of {_new_inverter_limit}W."
+        if abs(_inverter_limit - _new_inverter_limit) > limit_tolerance:
+            _response = open_dtu.set_inverter_limit(
+                host=open_dtu_host,
+                password=open_dtu_password,
+                serial=_serial,
+                power_limit=_new_inverter_limit,
             )
+            if _response is None:
+                print(
+                    f"Problem setting the inverter limit of {_new_inverter_limit}W."
+                )
     _report["required"] = round(_required, 2)
     key = "power:{}".format(time.strftime("%Y%m%d"))
     print(_report)
