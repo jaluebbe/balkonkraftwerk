@@ -39,7 +39,7 @@ def _send_command(url: str, password: str, payload: dict) -> dict | None:
 
 
 def request_inverter_data(host: str) -> dict:
-    url = f"http://192.168.12.91/api/livedata/status"
+    url = f"http://{host}/api/livedata/status"
     data = _request_data(url)
     if data is None:
         logging.warning("Open DTU data is None.")
