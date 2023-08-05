@@ -31,10 +31,8 @@ while True:
             and _now <= _consumer["until"]
         ):
             pass
-        elif (
-            _consumer["from"] > _consumer["until"]
-            and _now >= _consumer["from"]
-            or _now <= _consumer["until"]
+        elif _consumer["from"] > _consumer["until"] and (
+            _now >= _consumer["from"] or _now <= _consumer["until"]
         ):
             pass
         else:

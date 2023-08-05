@@ -31,10 +31,8 @@ while True:
             and _now <= _consumer["until"]
         ):
             pass
-        elif (
-            _consumer["from"] > _consumer["until"]
-            and _now >= _consumer["from"]
-            or _now <= _consumer["until"]
+        elif _consumer["from"] > _consumer["until"] and (
+            _now >= _consumer["from"] or _now <= _consumer["until"]
         ):
             pass
         else:
@@ -43,29 +41,28 @@ while True:
         _report["temporary_consumers"].append(_consumer)
     _inverters = open_dtu.request_inverter_data(host=open_dtu_host)
     for _serial in producer_inverter_serials:
-        _data = _inverters.get(_serial)
-        if (
-            _data is not None
-            and len(_data) == 1
-            and _data[0]["data_age"] < inverter_timeout
-        ):
-            _ac_power = _data[0]["AC"]["0"]["Power"]["v"]
-            _yield_total = _data[0]["AC"]["0"]["YieldTotal"]["v"]
-            _dc_voltage = _data[0]["DC"]["0"]["Voltage"]["v"]
-            _dc_current = _data[0]["DC"]["0"]["Current"]["v"]
-            _inverter_limit = _data[0]["limit_absolute"]
-            _required -= _ac_power
-            _report["producer_inverters"].append(
-                {
-                    "ac_power": _ac_power,
-                    "yield_total": _yield_total,
-                    "dc_voltage": _dc_voltage,
-                    "dc_current": _dc_current,
-                    "inverter_limit": _inverter_limit,
-                }
-            )
-        elif _data is None:
+        _inverter = _inverters.get(_serial)
+        if _inverter is None:
             print(f"Readout of {_serial} failed.")
+            continue
+        if _inverter["data_age"] > inverter_timeout:
+            print(f"Data of {_serial} is too old.")
+            continue
+        _ac_power = _inverter["AC"]["0"]["Power"]["v"]
+        _yield_total = _inverter["AC"]["0"]["YieldTotal"]["v"]
+        _dc_voltage = _inverter["DC"]["0"]["Voltage"]["v"]
+        _dc_current = _inverter["DC"]["0"]["Current"]["v"]
+        _inverter_limit = _inverter["limit_absolute"]
+        _required -= _ac_power
+        _report["producer_inverters"].append(
+            {
+                "ac_power": _ac_power,
+                "yield_total": _yield_total,
+                "dc_voltage": _dc_voltage,
+                "dc_current": _dc_current,
+                "inverter_limit": _inverter_limit,
+            }
+        )
     for _id in consumers:
         _data = mystrom_switch.read_switch(_id)
         if _data is not None:
