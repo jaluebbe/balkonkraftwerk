@@ -32,6 +32,7 @@ while True:
             _report["required"] -= _ac_power
             _report["producer_inverters"].append(
                 {
+                    "id": _id,
                     "ac_power": round(_ac_power, 1),
                     "yield_total": round(_yield_total, 3),
                     "dc_voltage": round(_dc_voltage, 1),
@@ -67,6 +68,7 @@ while True:
             _report["required"] -= _ac_power
             _report["battery_inverters"].append(
                 {
+                    "id": _id,
                     "ac_power": round(_ac_power, 1),
                     "yield_total": round(_yield_total, 3),
                     "dc_voltage": round(_dc_voltage, 1),
