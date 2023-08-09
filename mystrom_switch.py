@@ -6,7 +6,13 @@ import requests
 def read_switch(host: str) -> dict | None:
     url = f"http://{host}/report"
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=1.1)
+    except requests.exceptions.ConnectTimeout:
+        logging.error(f"Connection to {url} timed out.")
+        return
+    except requests.exceptions.ReadTimeout:
+        logging.error(f"Read from {url} timed out.")
+        return
     except requests.exceptions.ConnectionError:
         logging.error(f"Connection to {url} failed.")
         return
