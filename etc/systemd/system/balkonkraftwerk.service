@@ -1,0 +1,12 @@
+[Unit]
+Description=balkonkraftwerk
+After=redis-server.service
+
+[Service]
+Type=simple
+User=pi
+Restart=on-failure
+ExecStart=/home/pi/balkonkraftwerk/balkonkraftwerk.py
+
+[Install]
+WantedBy=multi-user.target
