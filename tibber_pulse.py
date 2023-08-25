@@ -3,8 +3,9 @@ import json
 import arrow
 from redis import asyncio as aioredis
 import tibber
+from config import tibber_api_key
 
-account = tibber.Account("-AD5Ahxgk-u7NEQpPWg3_14XCCBBPcQDwWezs7J4QNY")
+account = tibber.Account(tibber_api_key)
 home = account.homes[0]
 redis_connection = aioredis.Redis()
 
