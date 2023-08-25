@@ -23,7 +23,7 @@ def process_consumers(report: dict) -> None:
             pass
         else:
             continue
-        report["required"] += _consumer["power"]
+        report["consumer_power"] += _consumer["power"]
         report["scheduled_consumers"].append(_consumer)
     for _id in consumers:
         _data = mystrom_switch.read_switch(_id)
@@ -31,7 +31,7 @@ def process_consumers(report: dict) -> None:
             _power = _data["power"]
             if _power == 0:
                 continue
-            report["required"] += _power
+            report["consumer_power"] += _power
             report["consumers"].append({"id": _id, "power": _power})
         else:
             print(f"Readout of {_id} failed.")
