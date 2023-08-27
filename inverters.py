@@ -52,8 +52,6 @@ def process_inverter_limits(report: dict, required_limit: float) -> None:
             _new_inverter_limit = max(
                 0, min(max_inverter_limit, required_limit)
             )
-        required_limit -= _new_inverter_limit
-        _inverter["new_inverter_limit"] = round(_new_inverter_limit, 0)
         if _inverter["enabled"] and _new_inverter_limit == 0:
             open_dtu.disable_inverter(
                 host=open_dtu_host, password=open_dtu_password, serial=_serial
@@ -74,3 +72,5 @@ def process_inverter_limits(report: dict, required_limit: float) -> None:
             print(
                 f"Problem setting the inverter limit of {_new_inverter_limit}W."
             )
+        required_limit -= _new_inverter_limit
+        _inverter["new_inverter_limit"] = round(_new_inverter_limit, 0)
