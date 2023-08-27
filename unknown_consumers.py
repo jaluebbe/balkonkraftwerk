@@ -37,6 +37,11 @@ def process_unknown_consumers(report: dict) -> None:
             report["utc"] - 1.5 * interval
         )
         if len(_recent_meter_power) > 0:
+            _meter_data = json.loads(
+                redis_connection.lrange("tibber_pulse", 0, 0)[0]
+            )
+            report["meter_consumed"] = _meter_data["lastMeterConsumption"]
+            report["meter_produced"] = _meter_data["lastMeterProduction"]
             _meter_power = np.median(_recent_meter_power)
             utc_meter_processed = report["utc"]
             report["unknown_consumers_power"] = max(
