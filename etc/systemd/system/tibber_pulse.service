@@ -1,0 +1,14 @@
+[Unit]
+Description=Tibber Pulse
+After=redis-server.service
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/balkonkraftwerk
+Environment=PYTHONPATH=/home/pi/balkonkraftwerk
+ExecStart=/home/pi/balkonkraftwerk/venv/bin/python tibber_pulse.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
