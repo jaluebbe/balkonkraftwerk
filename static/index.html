@@ -1,0 +1,176 @@
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="utf-8">
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+    <title>Electricity meter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        table,
+        th,
+        td {
+            border: 1px solid black;
+        }
+
+        td {
+            text-align: center;
+        }
+
+        body {
+            font-family: Verdana, Geneva, Arial, sans-serif;
+            font-size: 16px;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="gauge.min.js"></script>
+    <div style="text-align: center;"><canvas id="canvas-preview" width="380" height="230"></canvas></div>
+    <table style="width:100%;">
+        <tr>
+            <th colspan="3">Electricity meter</th>
+        </tr>
+        <tr>
+            <td style="width: 40%">L1</td>
+            <td style="width: 30%"><span id="voltageL1"></span>&nbsp;V</td>
+            <td style="width: 30%"><span id="currentL1"></span>&nbsp;A</td>
+        </tr>
+        <tr>
+            <td>L2</td>
+            <td><span id="voltageL2"></span>&nbsp;V</td>
+            <td><span id="currentL2"></span>&nbsp;A</td>
+        </tr>
+        <tr>
+            <td>L3</td>
+            <td><span id="voltageL3"></span>&nbsp;V</td>
+            <td><span id="currentL3"></span>&nbsp;A</td>
+        </tr>
+        <tr>
+            <td>Consumption</td>
+            <td><span id="meterConsumptionPower"></span>&nbsp;W</td>
+            <td><span id="meterConsumption"></span>&nbsp;kWh</td>
+        </tr>
+        <tr>
+            <td>Production</td>
+            <td><span id="meterProductionPower"></span>&nbsp;W</td>
+            <td><span id="meterProduction"></span>&nbsp;kWh</td>
+        </tr>
+        <tr>
+            <th colspan="3">Balcony power plant</th>
+        </tr>
+        <tr>
+            <td colspan="2">Solar power</td>
+            <td><span id="producerPower"></span>&nbsp;W</td>
+        </tr>
+        <tr>
+            <td colspan="2">From battery</td>
+            <td><span id="batteryPower"></span>&nbsp;W</td>
+        </tr>
+        <tr>
+            <td colspan="2">Known consumers</td>
+            <td><span id="consumerPower"></span>&nbsp;W</td>
+        </tr>
+        <tr>
+            <td colspan="2">Unknown consumers</td>
+            <td><span id="unknownConsumersPower"></span>&nbsp;W</td>
+        </tr>
+    </table>
+
+    <script>
+        const gaugeOpts = {
+            angle: 0.1,
+            lineWidth: 0.44,
+            pointer: {
+                length: 0.63,
+                strokeWidth: 0.035
+            },
+            limitMax: true,
+            limitMin: true,
+            strokeColor: '#E0E0E0',
+            staticLabels: {
+                font: "14px sans-serif",
+                labels: [-200, -150, -100, -50, 0, 50, 100, 150, 200],
+                color: "#000000",
+                fractionDigits: 0
+            },
+            renderTicks: {
+                divisions: 8,
+                divWidth: 1.6,
+                divLength: 0.5,
+                divColor: '#333333',
+                subDivisions: 5,
+                subLength: 0.3,
+                subWidth: 0.4,
+                subColor: '#666666'
+            },
+            staticZones: [{
+                    strokeStyle: "#30B32D",
+                    min: -200,
+                    max: 0
+                }, // Green
+                {
+                    strokeStyle: "#FFDD00",
+                    min: 0,
+                    max: 200
+                } // Yellow
+            ]
+        };
+        const canvasTarget = document.getElementById('canvas-preview');
+        const gauge = new Gauge(canvasTarget).setOptions(gaugeOpts);
+        gauge.maxValue = 200;
+        gauge.setMinValue(-200);
+        gauge.set(0);
+
+        function processMeterMessage(message) {
+            let consumptionPower = parseFloat(message.power)
+            let productionPower = parseFloat(message.powerProduction)
+            gauge.set(consumptionPower - productionPower);
+            voltageL1.innerHTML = parseFloat(message.voltagePhase1).toFixed(1);
+            voltageL2.innerHTML = parseFloat(message.voltagePhase2).toFixed(1);
+            voltageL3.innerHTML = parseFloat(message.voltagePhase3).toFixed(1);
+            currentL1.innerHTML = parseFloat(message.currentL1).toFixed(2);
+            currentL2.innerHTML = parseFloat(message.currentL2).toFixed(2);
+            currentL3.innerHTML = parseFloat(message.currentL3).toFixed(2);
+            meterConsumption.innerHTML = parseFloat(message.lastMeterConsumption).toFixed(2);
+            meterConsumptionPower.innerHTML = consumptionPower;
+            meterProduction.innerHTML = parseFloat(message.lastMeterProduction).toFixed(2);
+            meterProductionPower.innerHTML = productionPower;
+        }
+
+        function connect_meter() {
+            ws_meter = new WebSocket("ws://" + window.location.host + "/ws/tibber_pulse");
+            ws_meter.onmessage = function(event) {
+                let message = JSON.parse(event.data);
+                processMeterMessage(message);
+            }
+            ws_meter.onclose = function(e) {
+                console.log('Socket is closed. Reconnect will be attempted in 5 seconds.', e.reason);
+                setTimeout(function() {
+                    connect();
+                }, 5000);
+            }
+        }
+
+        function connect() {
+            ws = new WebSocket("ws://" + window.location.host + "/ws/balkonkraftwerk");
+            ws.onmessage = function(event) {
+                let message = JSON.parse(event.data);
+                producerPower.innerHTML = message.producer_power;
+                batteryPower.innerHTML = message.battery_power;
+                consumerPower.innerHTML = message.consumer_power;
+                unknownConsumersPower.innerHTML = message.unknown_consumers_power;
+            }
+            ws.onclose = function(e) {
+                console.log('Socket is closed. Reconnect will be attempted in 5 seconds.', e.reason);
+                setTimeout(function() {
+                    connect();
+                }, 5000);
+            }
+        }
+
+        connect_meter();
+        connect();
+    </script>
+</body>
+
+</html>

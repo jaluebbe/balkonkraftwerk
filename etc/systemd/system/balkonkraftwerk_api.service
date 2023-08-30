@@ -1,0 +1,13 @@
+[Unit]
+Description=Host an API to access power records of balkonkraftwerk
+After=redis-server.service
+
+[Service]
+Type=simple
+User=pi
+Restart=on-failure
+ExecStart=/home/pi/balkonkraftwerk/venv/bin/uvicorn backend_fastapi:app --host 0.0.0.0 --port 8080
+WorkingDirectory=/home/pi/balkonkraftwerk
+
+[Install]
+WantedBy=multi-user.target
