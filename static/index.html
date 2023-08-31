@@ -25,6 +25,7 @@
 
 <body>
     <script src="gauge.min.js"></script>
+    <script src="no_sleep.min.js"></script>
     <div style="text-align: center;"><canvas id="canvas-preview" width="380" height="230"></canvas></div>
     <table style="width:100%;">
         <tr>
@@ -63,7 +64,8 @@
             <td><span id="producerPower"></span>&nbsp;W</td>
         </tr>
         <tr>
-            <td colspan="2">From battery</td>
+            <td>From battery</td>
+            <td><span id="batteryVoltage"></span>&nbsp;V</td>
             <td><span id="batteryPower"></span>&nbsp;W</td>
         </tr>
         <tr>
@@ -75,8 +77,20 @@
             <td><span id="unknownConsumersPower"></span>&nbsp;W</td>
         </tr>
     </table>
+    <input type="checkbox" id="preventSleep" name="preventSleep" onchange="preventSleepChanged()">
+    <label for="preventSleep">prevent standby</label>
 
     <script>
+        var noSleep = new NoSleep();
+
+        function preventSleepChanged() {
+            if (preventSleep.checked) {
+                noSleep.enable();
+            } else {
+                noSleep.disable();
+            }
+        }
+
         const gaugeOpts = {
             angle: 0.1,
             lineWidth: 0.44,
@@ -159,6 +173,11 @@
                 batteryPower.innerHTML = message.battery_power;
                 consumerPower.innerHTML = message.consumer_power;
                 unknownConsumersPower.innerHTML = message.unknown_consumers_power;
+                if (message.battery_inverters.length > 0) {
+                    batteryVoltage.innerHTML = message.battery_inverters[0].dc_voltage;
+                } else {
+                    batteryVoltage.innerHTML = "";
+                }
             }
             ws.onclose = function(e) {
                 console.log('Socket is closed. Reconnect will be attempted in 5 seconds.', e.reason);
