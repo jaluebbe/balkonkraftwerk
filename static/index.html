@@ -173,8 +173,9 @@
                 batteryPower.innerHTML = message.battery_power;
                 consumerPower.innerHTML = message.consumer_power;
                 unknownConsumersPower.innerHTML = message.unknown_consumers_power;
-                if (message.battery_inverters.length > 0) {
-                    batteryVoltage.innerHTML = message.battery_inverters[0].dc_voltage;
+                let inverterCount = message.battery_inverters.length;
+                if (inverterCount > 0) {
+                    batteryVoltage.innerHTML = message.battery_inverters[inverterCount - 1].dc_voltage;
                 } else {
                     batteryVoltage.innerHTML = "";
                 }
