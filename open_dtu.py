@@ -77,17 +77,17 @@ def set_inverter_limit(
 
 def enable_inverter(host: str, password: str, serial: str) -> dict | None:
     url = f"http://{host}/api/power/config"
-    payload = f'data={{"serial":"{serial}", "power": true}}'
+    payload = f'data={{"serial":"{serial}", "power":true}}'
     return _send_command(url, password, payload)
 
 
 def disable_inverter(host: str, password: str, serial: str) -> dict | None:
     url = f"http://{host}/api/power/config"
-    payload = f'data={{"serial":"{serial}", "power": false}}'
+    payload = f'data={{"serial":"{serial}", "power":false}}'
     return _send_command(url, password, payload)
 
 
 def restart_inverter(host: str, password: str, serial: str) -> dict | None:
     url = f"http://{host}/api/power/config"
-    payload = f'data={{"serial":"{serial}", "restart": true}}'
+    payload = f'data={{"serial":"{serial}", "restart":true}}'
     return _send_command(url, password, payload)
