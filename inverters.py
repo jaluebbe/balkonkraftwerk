@@ -40,7 +40,9 @@ def process_inverters_readout(report: dict) -> None:
 
 
 def process_inverter_limits(report: dict, required_limit: float) -> None:
+    min_total_power = min_inverter_limit * len(report["battery_inverters"])
     for _inverter in report["battery_inverters"]:
+        min_total_power -= min_inverter_limit
         _serial = _inverter["serial"]
         _battery_voltage = (
             _inverter["dc_voltage"]
@@ -50,7 +52,8 @@ def process_inverter_limits(report: dict, required_limit: float) -> None:
             _new_inverter_limit = 0
         else:
             _new_inverter_limit = max(
-                0, min(max_inverter_limit, required_limit)
+                min_inverter_limit,
+                min(max_inverter_limit, required_limit - min_total_power),
             )
         if _inverter["enabled"] and _new_inverter_limit == 0:
             open_dtu.disable_inverter(
@@ -66,7 +69,7 @@ def process_inverter_limits(report: dict, required_limit: float) -> None:
             host=open_dtu_host,
             password=open_dtu_password,
             serial=_serial,
-            power_limit=max(_new_inverter_limit, min_inverter_limit),
+            power_limit=_new_inverter_limit,
         )
         if _response is None:
             print(

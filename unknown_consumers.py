@@ -19,46 +19,22 @@ def collect_meter_power(utc_start: int):
 
 
 def process_unknown_consumers(report: dict) -> None:
-    _unknown_consumers = redis_connection.get("unknown_consumers")
-    if _unknown_consumers is not None:
-        _unknown_consumers = json.loads(_unknown_consumers)
-        utc_meter_processed = _unknown_consumers["utc"]
-        if report["utc"] - _unknown_consumers["utc"] < 300:
-            report["unknown_consumers_power"] = _unknown_consumers["power"]
-        else:
-            report["unknown_consumers_power"] = 0
-    else:
-        utc_meter_processed = None
-    if (
-        utc_meter_processed is None
-        or report["utc"] - utc_meter_processed > 1.5 * interval
-    ):
-        _recent_meter_power = collect_meter_power(
-            report["utc"] - 1.5 * interval
+    _recent_meter_power = collect_meter_power(report["utc"] - 0.5 * interval)
+    if len(_recent_meter_power) > 0:
+        _meter_data = json.loads(
+            redis_connection.lrange("tibber_pulse", 0, 0)[0]
         )
-        if len(_recent_meter_power) > 0:
-            _meter_data = json.loads(
-                redis_connection.lrange("tibber_pulse", 0, 0)[0]
-            )
-            report["meter_consumed"] = _meter_data["lastMeterConsumption"]
-            report["meter_produced"] = _meter_data["lastMeterProduction"]
-            _meter_power = np.median(_recent_meter_power)
-            utc_meter_processed = report["utc"]
-            report["unknown_consumers_power"] = max(
-                0,
-                (
-                    _meter_power
-                    - report["consumer_power"]
-                    + report["producer_power"]
-                    + report["battery_power"]
-                ),
-            )
-            redis_connection.set(
-                "unknown_consumers",
-                json.dumps(
-                    {
-                        "utc": utc_meter_processed,
-                        "power": report["unknown_consumers_power"],
-                    }
-                ),
-            )
+        report["meter_consumed"] = _meter_data["lastMeterConsumption"]
+        report["meter_produced"] = _meter_data["lastMeterProduction"]
+        _meter_power = np.median(_recent_meter_power)
+        report["unknown_consumers_power"] = max(
+            0,
+            (
+                _meter_power
+                - report["consumer_power"]
+                + report["producer_power"]
+                + report["battery_power"]
+            ),
+        )
+    else:
+        report["unknown_consumers_power"] = 0
