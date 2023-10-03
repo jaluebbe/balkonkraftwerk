@@ -40,7 +40,12 @@ def process_inverters_readout(report: dict) -> None:
 
 
 def process_inverter_limits(report: dict, required_limit: float) -> None:
-    min_total_power = min_inverter_limit * len(report["battery_inverters"])
+    active_inverters = [
+        _inverter
+        for _inverter in report["battery_inverters"]
+        if _inverter["enabled"]
+    ]
+    min_total_power = min_inverter_limit * len(active_inverters)
     for _inverter in report["battery_inverters"]:
         min_total_power -= min_inverter_limit
         _serial = _inverter["serial"]
@@ -48,7 +53,13 @@ def process_inverter_limits(report: dict, required_limit: float) -> None:
             _inverter["dc_voltage"]
             + _inverter["dc_current"] * battery_resistance
         )
-        if _battery_voltage < battery_off_voltage:
+        if (
+            required_limit < 0
+            and not _inverter["enabled"]
+            or required_limit < inverter_shutdown_value
+        ):
+            _new_inverter_limit = 0
+        elif _battery_voltage < battery_off_voltage:
             _new_inverter_limit = 0
         else:
             _new_inverter_limit = max(
