@@ -7,6 +7,7 @@ import numpy as np
 import open_dtu
 import mystrom_switch
 from consumers import process_consumers
+from producers import process_producers
 from inverters import process_inverters_readout, process_inverter_limits
 from unknown_consumers import process_unknown_consumers
 from config import *
@@ -19,6 +20,7 @@ while True:
         "utc": int(time.time()),
         "min_power": min_power,
         "consumers": [],
+        "producers": [],
         "scheduled_consumers": [],
         "producer_inverters": [],
         "battery_inverters": [],
@@ -29,6 +31,7 @@ while True:
     }
 
     process_consumers(_report)
+    process_producers(_report)
     process_inverters_readout(_report)
     process_unknown_consumers(_report)
 
