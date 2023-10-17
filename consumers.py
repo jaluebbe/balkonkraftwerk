@@ -1,5 +1,6 @@
 import datetime
 import mystrom_switch
+import shelly_devices
 from config import *
 
 
@@ -25,13 +26,22 @@ def process_consumers(report: dict) -> None:
             continue
         report["consumer_power"] += _consumer["power"]
         report["scheduled_consumers"].append(_consumer)
-    for _id in consumers:
-        _data = mystrom_switch.read_switch(_id)
+    for _consumer in consumers:
+        if _consumer.get("type") == "mystrom":
+            _data = mystrom_switch.read_switch(_consumer["host"])
+        elif _consumer.get("type") == "shelly":
+            _data = shelly_devices.read_devices(
+                _consumer["host"], _consumer["generation"]
+            )
+        else:
+            continue
         if _data is not None:
             _power = _data["power"]
             if _power == 0:
                 continue
             report["consumer_power"] += _power
-            report["consumers"].append({"id": _id, "power": _power})
+            report["consumers"].append(
+                {"id": _consumer["host"], "power": _power}
+            )
         else:
-            print(f"Readout of {_id} failed.")
+            print(f"Readout of {_consumer} failed.")
