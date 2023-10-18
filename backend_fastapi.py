@@ -1,7 +1,9 @@
+#!/usr/bin/env python3
 import os
 import time
 from pathlib import Path
 import socket
+import uvicorn
 from fastapi import FastAPI, Request, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
@@ -41,3 +43,7 @@ async def get_current_power():
     if len(_data) == 0:
         raise HTTPException(status_code=404, detail="no data available")
     return Response(content=_data[0], media_type="application/json")
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8080)

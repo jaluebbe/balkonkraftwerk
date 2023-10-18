@@ -6,7 +6,7 @@ After=redis-server.service
 Type=simple
 User=pi
 Restart=on-failure
-ExecStart=/home/pi/balkonkraftwerk/venv/bin/uvicorn backend_fastapi:app --host 0.0.0.0 --port 8080
+ExecStart=/home/pi/balkonkraftwerk/backend_fastapi.py
 WorkingDirectory=/home/pi/balkonkraftwerk
 
 [Install]
