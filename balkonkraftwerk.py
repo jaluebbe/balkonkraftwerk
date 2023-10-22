@@ -37,9 +37,10 @@ while True:
 
     _required_limit = (
         _report["consumer_power"]
-        + _report["unknown_consumers_power"]
         - _report["producer_power"]
     )
+    if consider_unknown_consumers:
+        _required_limit += _report["unknown_consumers_power"]
     _report["required"] = round(_required_limit - _report["battery_power"], 1)
     process_inverter_limits(_report, _required_limit)
     for _key in [
