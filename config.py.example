@@ -1,7 +1,6 @@
 min_power = 35
 min_inverter_limit = 6
 max_inverter_limit = 240
-ahoy_dtu_host = "ahoy-dtu"
 open_dtu_host = "open-dtu"
 open_dtu_password = "openDTU42"
 consumers = [
