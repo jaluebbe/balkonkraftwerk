@@ -1,14 +1,18 @@
 min_power = 35
-min_inverter_limit = 6
-max_inverter_limit = 240
+min_inverter_limit = 18
+max_inverter_limit = 180
+battery_resistance = 0.1
+battery_off_voltage = 24
+battery_on_voltage = 25.6
+inverter_shutdown_value = -50
 open_dtu_host = "open-dtu"
 open_dtu_password = "openDTU42"
 consumers = [
-    "192.168.1.100",  # fridge
-    "192.168.1.101",  # TV
-    "192.168.1.102",  # PC
+    {"host": "192.168.1.100", "name": "fridge", "type": "mystrom"},
+    {"host": "192.168.1.101", "name": "TV", "type": "shelly", "generation": 1},
+    {"host": "192.168.1.102", "name": "PC", "type": "shelly", "generation": 2},
 ]
-temporary_consumers = [
+scheduled_consumers = [
     {"from": "18:00", "until": "00:00", "power": 15, "name": "NAS"},
     {
         "from": "10:00",
@@ -18,9 +22,10 @@ temporary_consumers = [
         "days": ["Sat", "Sun"],
     },
 ]
-producer_inverters = [1]
-battery_inverters = [0]
+consider_unknown_consumers = False
+producers = [
+    {"host": "192.168.1.104", "name": "west balcony", "type": "shelly", "generation": 2},
+]
 producer_inverter_serials = []
 battery_inverter_serials = []
-interval = 15
-inverter_timeout = 300
+interval = 30
