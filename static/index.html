@@ -141,15 +141,17 @@
             let consumptionPower = parseFloat(message.power)
             let productionPower = parseFloat(message.powerProduction)
             gauge.set(consumptionPower - productionPower);
-            voltageL1.innerHTML = parseFloat(message.voltagePhase1).toFixed(1);
-            voltageL2.innerHTML = parseFloat(message.voltagePhase2).toFixed(1);
-            voltageL3.innerHTML = parseFloat(message.voltagePhase3).toFixed(1);
-            currentL1.innerHTML = parseFloat(message.currentL1).toFixed(2);
-            currentL2.innerHTML = parseFloat(message.currentL2).toFixed(2);
-            currentL3.innerHTML = parseFloat(message.currentL3).toFixed(2);
-            meterConsumption.innerHTML = parseFloat(message.lastMeterConsumption).toFixed(2);
+            if (message.voltagePhase1 != null) {
+                voltageL1.innerHTML = parseFloat(message.voltagePhase1).toFixed(1);
+                voltageL2.innerHTML = parseFloat(message.voltagePhase2).toFixed(1);
+                voltageL3.innerHTML = parseFloat(message.voltagePhase3).toFixed(1);
+                currentL1.innerHTML = parseFloat(message.currentL1).toFixed(2);
+                currentL2.innerHTML = parseFloat(message.currentL2).toFixed(2);
+                currentL3.innerHTML = parseFloat(message.currentL3).toFixed(2);
+                meterConsumption.innerHTML = parseFloat(message.lastMeterConsumption).toFixed(2);
+                meterProduction.innerHTML = parseFloat(message.lastMeterProduction).toFixed(2);
+            }
             meterConsumptionPower.innerHTML = consumptionPower;
-            meterProduction.innerHTML = parseFloat(message.lastMeterProduction).toFixed(2);
             meterProductionPower.innerHTML = productionPower;
             lastMeterMessageUtc = message.utc;
         }
