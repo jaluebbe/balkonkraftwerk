@@ -64,7 +64,7 @@
             <td colspan="2">Solar power</td>
             <td><span id="producerPower"></span>&nbsp;W</td>
         </tr>
-        <tr>
+        <tr class="batteryData" style="display: none;">
             <td>From battery</td>
             <td><span id="batteryVoltage"></span>&nbsp;V</td>
             <td><span id="batteryPower"></span>&nbsp;W</td>
@@ -186,7 +186,6 @@
             ws.onmessage = function(event) {
                 let message = JSON.parse(event.data);
                 producerPower.innerHTML = message.producer_power;
-                batteryPower.innerHTML = message.battery_power;
                 consumerPower.innerHTML = message.consumer_power;
                 if (message.unknown_consumers_power != null) {
                     unknownConsumersPower.innerHTML = message.unknown_consumers_power;
@@ -196,9 +195,11 @@
                 }
                 let inverterCount = message.battery_inverters.length;
                 if (inverterCount > 0) {
+                    batteryPower.innerHTML = message.battery_power;
                     batteryVoltage.innerHTML = message.battery_inverters[inverterCount - 1].dc_voltage;
+                    toggle_by_class("batteryData", true);
                 } else {
-                    batteryVoltage.innerHTML = "";
+                    toggle_by_class("batteryData", false);
                 }
                 lastMessageUtc = message.utc;
             }
