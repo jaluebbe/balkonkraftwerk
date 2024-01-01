@@ -22,6 +22,7 @@ def process_inverters_readout(report: dict) -> None:
         elif _serial in producer_inverter_serials:
             report["producer_power"] += _ac_power
         elif _serial in battery_inverter_serials:
+            report.setdefault("battery_power", 0)
             report["battery_power"] += _ac_power
         _entry = {
             "serial": _serial,

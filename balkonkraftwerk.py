@@ -26,7 +26,6 @@ while True:
         "battery_inverters": [],
         "consumer_power": min_power,
         "producer_power": 0,
-        "battery_power": 0,
         "unknown_consumers_power": 0,
     }
 
@@ -35,13 +34,15 @@ while True:
     process_inverters_readout(_report)
     process_unknown_consumers(_report)
 
-    _required_limit = (
-        _report["consumer_power"]
-        - _report["producer_power"]
-    )
+    _required_limit = _report["consumer_power"] - _report["producer_power"]
     if consider_unknown_consumers:
         _required_limit += _report["unknown_consumers_power"]
-    _report["required"] = round(_required_limit - _report["battery_power"], 1)
+    if _report.get("battery_power") is None:
+        _report["required"] = round(
+            _required_limit - _report["battery_power"], 1
+        )
+    else:
+        _report["required"] = round(_required_limit, 1)
     process_inverter_limits(_report, _required_limit)
     for _key in [
         "consumer_power",
