@@ -35,24 +35,24 @@
         <tr>
             <td style="width: 40%">Consumption</td>
             <td style="width: 30%"><span id="meterConsumptionPower"></span>&nbsp;W</td>
-            <td style="width: 30%"><span id="meterConsumption"></span>&nbsp;kWh</td>
+            <td style="width: 30%" class="extendedMeterData"><span id="meterConsumption"></span>&nbsp;kWh</td>
         </tr>
         <tr>
             <td>Production</td>
             <td><span id="meterProductionPower"></span>&nbsp;W</td>
-            <td><span id="meterProduction"></span>&nbsp;kWh</td>
+            <td class="extendedMeterData"><span id="meterProduction"></span>&nbsp;kWh</td>
         </tr>
-        <tr class="phaseData" style="display: none;">
+        <tr class="extendedMeterData" style="display: none;">
             <td>L1</td>
             <td><span id="voltageL1"></span>&nbsp;V</td>
             <td><span id="currentL1"></span>&nbsp;A</td>
         </tr>
-        <tr class="phaseData" style="display: none;">
+        <tr class="extendedMeterData" style="display: none;">
             <td>L2</td>
             <td><span id="voltageL2"></span>&nbsp;V</td>
             <td><span id="currentL2"></span>&nbsp;A</td>
         </tr>
-        <tr class="phaseData" style="display: none;">
+        <tr class="extendedMeterData" style="display: none;">
             <td>L3</td>
             <td><span id="voltageL3"></span>&nbsp;V</td>
             <td><span id="currentL3"></span>&nbsp;A</td>
@@ -158,9 +158,9 @@
                 currentL3.innerHTML = parseFloat(message.currentL3).toFixed(2);
                 meterConsumption.innerHTML = parseFloat(message.lastMeterConsumption).toFixed(2);
                 meterProduction.innerHTML = parseFloat(message.lastMeterProduction).toFixed(2);
-                toggle_by_class("phaseData", true);
+                toggle_by_class("extendedMeterData", true);
             } else {
-                toggle_by_class("phaseData", false);
+                toggle_by_class("extendedMeterData", false);
             }
             meterConsumptionPower.innerHTML = consumptionPower;
             meterProductionPower.innerHTML = productionPower;
