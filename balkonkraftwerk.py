@@ -37,7 +37,7 @@ while True:
     _required_limit = _report["consumer_power"] - _report["producer_power"]
     if consider_unknown_consumers:
         _required_limit += _report["unknown_consumers_power"]
-    if _report.get("battery_power") is None:
+    if _report.get("battery_power") is not None:
         _report["required"] = round(
             _required_limit - _report["battery_power"], 1
         )

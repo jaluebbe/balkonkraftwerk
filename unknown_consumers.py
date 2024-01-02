@@ -27,13 +27,17 @@ def process_unknown_consumers(report: dict) -> None:
         report["meter_consumed"] = _meter_data["lastMeterConsumption"]
         report["meter_produced"] = _meter_data["lastMeterProduction"]
         _meter_power = np.median(_recent_meter_power)
+        if report.get("battery_power") is None:
+            _battery_power = 0
+        else:
+            _battery_power = report["battery_power"]
         report["unknown_consumers_power"] = max(
             0,
             (
                 _meter_power
                 - report["consumer_power"]
                 + report["producer_power"]
-                + report["battery_power"]
+                + _battery_power
             ),
         )
     else:
