@@ -46,6 +46,8 @@ async def get_dataset(
 ):
     redis_connection = aioredis.Redis(host=redis_host, decode_responses=True)
     reversed_data = await redis_connection.lrange(_id.replace("_", ":"), 0, -1)
+    if len(reversed_data) == 0:
+        raise HTTPException(status_code=404, detail="dataset unknown.")
     data = ",\n".join(reversed_data[::-1])
     return [
         _row
@@ -61,9 +63,9 @@ async def move_to_archive(_id):
     key = _id.replace("_", ":")
     file_name = log_directory.joinpath(f"{_id}.json")
     reversed_data = await redis_connection.lrange(key, 0, -1)
-    data = ",\n".join(reversed_data[::-1])
-    if len(data) == 0:
+    if len(reversed_data) == 0:
         raise HTTPException(status_code=404, detail="dataset unknown.")
+    data = ",\n".join(reversed_data[::-1])
     json_string = f"[{data}]\n"
     if not file_name.exists():
         file_name.write_text(json_string)
