@@ -17,13 +17,12 @@ def process_inverters_readout(report: dict) -> None:
         _dc_current = _inverter["DC"]["0"]["Current"]["v"]
         _inverter_limit = _inverter["limit_absolute"]
         _inverter_enabled = _inverter["producing"]
-        if not _inverter_enabled:
-            pass
-        elif _serial in producer_inverter_serials:
-            report["producer_power"] += _ac_power
-        elif _serial in battery_inverter_serials:
+        if _serial in battery_inverter_serials:
             report.setdefault("battery_power", 0)
-            report["battery_power"] += _ac_power
+            if _inverter_enabled:
+                report["battery_power"] += _ac_power
+        elif _serial in producer_inverter_serials and _inverter_enabled:
+            report["producer_power"] += _ac_power
         _entry = {
             "serial": _serial,
             "name": _inverter["name"],
