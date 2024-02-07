@@ -9,6 +9,7 @@ import mystrom_switch
 from consumers import process_consumers
 from producers import process_producers
 from inverters import process_inverters_readout, process_inverter_limits
+from newmove_one import read_newmove_one
 from unknown_consumers import process_unknown_consumers
 from config import *
 
@@ -33,6 +34,10 @@ while True:
     process_producers(_report)
     process_inverters_readout(_report)
     process_unknown_consumers(_report)
+    # read out newmove one if available
+    _newmove_one_status = [read_newmove_one(_host) for _host in newmove_one_hosts]
+    if len(_newmove_one_status) > 0:
+        _report["newmove_one"] = _newmove_one_status
 
     _required_limit = _report["consumer_power"] - _report["producer_power"]
     if consider_unknown_consumers:

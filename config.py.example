@@ -28,4 +28,5 @@ producers = [
 ]
 producer_inverter_serials = []
 battery_inverter_serials = []
+newmove_one_hosts = []
 interval = 30
