@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="utf-8">
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+    <title>Power review</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        table,
+        th,
+        td {
+            border: 1px solid black;
+        }
+
+        td {
+            text-align: center;
+        }
+
+        body {
+            font-family: Verdana, Geneva, Arial, sans-serif;
+            font-size: 16px;
+        }
+
+        .container {
+            display: grid;
+        }
+
+        #reviewPlot {
+            min-height: 400px;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="spin.js/spin.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-basic-2.29.0.min.js" integrity="sha384-bW5GyVuCzgGlnBwLr+k8UXiKU+VXPlcy4KPVJHDTNTXPR3BnPb74Hjc0NbnsS0MM" crossorigin="anonymous"></script>
+    <div class="container">
+        <div>Select date&nbsp;<input type="date" id="dateInput" name="dateInput" onchange="loadData()"></div>
+        <div id="reviewPlot"></div>
+        <table style="width:100%;">
+            <tr>
+                <th colspan="4">Power review</th>
+            </tr>
+            <tr>
+                <td style="width: 30%">Consumed</td>
+                <td style="width: 20%"><span id="energyConsumed"></span>&nbsp;kWh</td>
+                <td style="width: 30%">Produced</td>
+                <td style="width: 20%"><span id="energyProduced"></span>&nbsp;kWh</td>
+            </tr>
+            <tr>
+                <td>Missing</td>
+                <td><span id="energyMissing"></span>&nbsp;kWh</td>
+                <td>Unused</td>
+                <td><span id="energyUnused"></span>&nbsp;kWh</td>
+            </tr>
+            <tr class="batteryAvailable" style="display: none;">
+                <th colspan="4">Battery</th>
+            </tr>
+            <tr class="batteryAvailable" style="display: none;">
+                <td>Produced</td>
+                <td><span id="energyBattery"></span>&nbsp;kWh</td>
+                <td>Unreachable</td>
+                <td><span id="energyUnreachable"></span>&nbsp;kWh</td>
+            </tr>
+        </table>
+    </div>
+    <script>
+        function toggle_by_class(cls, on) {
+            var lst = document.getElementsByClassName(cls);
+            for (var i = 0; i < lst.length; ++i) {
+                lst[i].style.display = on ? '' : 'none';
+            }
+        }
+
+        const layout = {
+            margin: {
+                t: 30,
+                r: 5,
+                b: 5,
+                l: 40
+            },
+            xaxis: {
+                automargin: true,
+                tickangle: 0,
+                type: 'date',
+            },
+            yaxis: {
+                range: [0, 200],
+                title: {
+                    text: "power / W"
+                }
+            },
+            legend: {
+                yanchor: "top",
+                y: 0.99,
+                xanchor: "left",
+                x: 0.01
+            },
+            "hovermode": "x unified"
+        };
+        const config = {
+            modeBarButtonsToRemove: [
+                'select2d', 'lasso2d', 'toggleSpikelines', 'zoomIn2d',
+                'zoomOut2d', 'hoverClosestCartesian', 'hoverCompareCartesian'
+            ],
+            displaylogo: false,
+            responsive: true,
+            displayModeBar: true
+        };
+        var spinner = undefined;
+
+        function refreshPlot(data) {
+            layout.yaxis.range = [0, data.plot_limit];
+            let plotData = [{
+                    hovertemplate: '%{y} W',
+                    line: {
+                        color: '#0055ff',
+                        shape: 'hv',
+                        width: 0
+                    },
+                    mode: 'lines',
+                    name: '🔌→🏠',
+                    stackgroup: 'consumer',
+                    x: data.consumer_power.utc_ms,
+                    y: data.consumer_power.values,
+                    type: 'scatter'
+                },
+                {
+                    hovertemplate: '%{y} W',
+                    line: {
+                        color: '#008800',
+                        shape: 'hv',
+                        width: 0
+                    },
+                    mode: 'lines',
+                    name: '☀️→🔌',
+                    stackgroup: 'producer',
+                    x: data.producer_power.utc_ms,
+                    y: data.producer_power.values,
+                    type: 'scatter'
+                }
+            ];
+            if (data.battery_power != null) {
+                plotData.push({
+                    hovertemplate: '%{y} W',
+                    line: {
+                        color: '#ffcc00',
+                        shape: 'hv',
+                        width: 0
+                    },
+                    mode: 'lines',
+                    name: '🔋→🔌',
+                    stackgroup: 'producer',
+                    x: data.battery_power.utc_ms,
+                    y: data.battery_power.values,
+                    type: 'scatter'
+                });
+            }
+            Plotly.react("reviewPlot", plotData, layout, config);
+        }
+
+        function refreshTable(data) {
+            energyConsumed.innerHTML = parseFloat(data.consumer_energy).toFixed(2);
+            energyProduced.innerHTML = parseFloat(data.producer_energy).toFixed(2);
+            energyUnused.innerHTML = parseFloat(data.unused_energy).toFixed(2);
+            energyMissing.innerHTML = parseFloat(data.missing_energy).toFixed(2);
+            if (data.max_battery_inverter_power == null) {
+                toggle_by_class("batteryAvailable", false);
+                return
+            }
+            toggle_by_class("batteryAvailable", true);
+            energyBattery.innerHTML = parseFloat(data.battery_energy ?? 0).toFixed(2);
+            energyUnreachable.innerHTML = parseFloat(data.battery_unreachable_energy).toFixed(2);
+        }
+
+        function loadData() {
+            spinner = new Spinner().spin(reviewPlot);
+            let date = dateInput.value.split("-").join("");
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', "/api/review/day?date=" + date);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    let data = JSON.parse(xhr.responseText);
+                    console.log(data);
+                    refreshPlot(data)
+                    refreshTable(data);
+                } else {
+                    Plotly.react("reviewPlot", [], layout, config)
+                    refreshTable({});
+                }
+                spinner.stop();
+            };
+            xhr.send();
+        }
+        // limiting the date input to yesterday
+        let myDate = new Date()
+        myDate.setDate(myDate.getDate() - 1);
+        dateInput.max = myDate.toISOString().split("T")[0];
+    </script>
+</body>
+
+</html>

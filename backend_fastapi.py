@@ -10,6 +10,7 @@ from fastapi.responses import RedirectResponse
 from redis import asyncio as aioredis
 
 import routers.datasets as datasets
+import routers.review as review
 import routers.meters as meters
 
 hostname = socket.gethostname()
@@ -27,6 +28,7 @@ if not log_directory.is_dir():
 app.mount("/archive", StaticFiles(directory=log_directory), name="archive")
 
 app.include_router(datasets.router)
+app.include_router(review.router)
 app.include_router(meters.router)
 
 
