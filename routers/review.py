@@ -2,6 +2,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from fastapi import APIRouter, Query, HTTPException
+from fastapi.responses import ORJSONResponse
 from config import max_inverter_limit, battery_inverter_serials
 
 router = APIRouter()
@@ -18,7 +19,7 @@ def _plot_list(power: pd.Series) -> dict[str, list]:
     return {"utc_ms": (_data.index * 1e3).to_list(), "values": _data.to_list()}
 
 
-@router.get("/api/review/day")
+@router.get("/api/review/day", response_class=ORJSONResponse)
 async def get_day_review(
     date: str = Query("*", regex="^[0-9]{8}$"),
 ):
@@ -58,4 +59,4 @@ async def get_day_review(
         response["battery_energy"] = _energy_power(
             df["battery_power"], df.index
         )
-    return response
+    return ORJSONResponse(response)

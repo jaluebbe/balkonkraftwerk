@@ -1,9 +1,9 @@
-import json
 import os
 from pathlib import Path
 from typing import Union
+import orjson
 from redis import asyncio as aioredis
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query, HTTPException, Response
 
 if "REDIS_HOST" in os.environ:
     redis_host = os.environ["REDIS_HOST"]
@@ -51,7 +51,7 @@ async def get_dataset(
     data = ",\n".join(reversed_data[::-1])
     return [
         _row
-        for _row in json.loads(f"[{data}]\n")
+        for _row in orjson.loads(f"[{data}]\n")
         if not (utc_min is not None and _row["utc"] < utc_min)
         and not (utc_max is not None and _row["utc"] > utc_max)
     ]
@@ -78,4 +78,4 @@ async def move_to_archive(_id):
         raise HTTPException(
             status_code=409, detail="data doesn't match to existing file."
         )
-    return json.loads(json_string)
+    return Response(content=json_string, media_type="application/json")

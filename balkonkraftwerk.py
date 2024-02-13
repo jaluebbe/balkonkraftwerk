@@ -1,6 +1,6 @@
 #!venv/bin/python3
 import time
-import json
+import orjson
 import socket
 import redis
 import numpy as np
@@ -58,7 +58,7 @@ while True:
         if _report.get(_key) is not None:
             _report[_key] = round(_report[_key], 1)
     _key = "power:{}:{}".format(hostname, time.strftime("%Y%m%d"))
-    _json_report = json.dumps(_report)
+    _json_report = orjson.dumps(_report, option=orjson.OPT_SERIALIZE_NUMPY)
     redis_connection.set("required_power", _report["required"])
     redis_connection.lpush(_key, _json_report)
     redis_connection.publish("balkonkraftwerk", _json_report)
