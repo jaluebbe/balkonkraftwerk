@@ -150,7 +150,6 @@
         gauge.maxValue = 200;
         gauge.setMinValue(-200);
         gauge.set(0);
-        var lastMeterMessageUtc = undefined;
         var lastMessageUtc = undefined;
 
         function processMeterMessage(message) {
@@ -180,7 +179,6 @@
             }
             meterConsumptionPower.innerHTML = consumptionPower;
             meterProductionPower.innerHTML = productionPower;
-            lastMeterMessageUtc = message.utc;
         }
 
         function processMessage(message) {
@@ -200,28 +198,18 @@
             } else {
                 toggle_by_class("batteryData", false);
             }
-            lastMessageUtc = message.utc;
-        }
-
-        function connect_meter() {
-            ws_meter = new WebSocket(ws_protocol + "//" + window.location.host + "/ws/tibber_pulse");
-            ws_meter.onmessage = function(event) {
-                let message = JSON.parse(event.data);
-                processMeterMessage(message);
-            }
-            ws_meter.onclose = function(e) {
-                console.log('Socket is closed. Reconnect will be attempted in 5 seconds.', e.reason);
-                setTimeout(function() {
-                    connect();
-                }, 5000);
-            }
         }
 
         function connect() {
-            ws = new WebSocket(ws_protocol + "//" + window.location.host + "/ws/balkonkraftwerk");
+            ws = new WebSocket(ws_protocol + "//" + window.location.host + "/ws");
             ws.onmessage = function(event) {
                 let message = JSON.parse(event.data);
-                processMessage(message);
+                if (message.type == "tibber_pulse") {
+                    processMeterMessage(message);
+                } else {
+                    processMessage(message);
+                }
+                lastMessageUtc = message.utc;
             }
             ws.onclose = function(e) {
                 console.log('Socket is closed. Reconnect will be attempted in 5 seconds.', e.reason);
@@ -231,22 +219,17 @@
             }
         }
 
-        function checkConnections() {
+        function checkConnection() {
             const utcNow = Date.now() / 1e3;
             if (lastMessageUtc != null && utcNow - lastMessageUtc > 30) {
                 ws.onclose = null;
                 connect();
             }
-            if (lastMeterMessageUtc != null && utcNow - lastMeterMessageUtc > 15) {
-                ws_meter.onclose = null;
-                connect_meter();
-            }
         }
 
-        connect_meter();
         connect();
         onfocus = (event) => {
-            checkConnections()
+            checkConnection()
         };
     </script>
 </body>

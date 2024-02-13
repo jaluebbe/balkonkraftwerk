@@ -10,16 +10,19 @@ else:
     redis_host = "127.0.0.1"
 
 
-@router.websocket("/ws/{channel}")
-async def websocket_endpoint(websocket: WebSocket, channel: str):
+@router.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket, channel: str|None=None):
     supported_channels = ["balkonkraftwerk", "tibber_pulse"]
     await websocket.accept()
-    if channel not in supported_channels:
+    if channel is not None and channel not in supported_channels:
         await websocket.close(code=status.WS_1003_UNSUPPORTED_DATA)
         return
     redis_connection = aioredis.Redis(host=redis_host, decode_responses=True)
     pubsub = redis_connection.pubsub(ignore_subscribe_messages=True)
-    await pubsub.subscribe(channel)
+    if channel is None:
+        await pubsub.subscribe(*supported_channels)
+    else:
+        await pubsub.subscribe(channel)
     async for message in pubsub.listen():
         await websocket.send_text(message["data"])
     await redis_connection.close()
