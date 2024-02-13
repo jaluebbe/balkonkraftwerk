@@ -6,7 +6,6 @@ After=redis-server.service
 Type=simple
 User=pi
 WorkingDirectory=/home/pi/balkonkraftwerk
-Environment=PYTHONPATH=/home/pi/balkonkraftwerk
 ExecStart=/home/pi/balkonkraftwerk/venv/bin/python tibber_pulse.py
 Restart=on-failure
 

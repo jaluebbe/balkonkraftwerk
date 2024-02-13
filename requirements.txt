@@ -1,0 +1,10 @@
+arrow
+fastapi
+numpy
+orjson
+pandas
+redis
+requests
+tibber.py
+uvicorn
+websockets

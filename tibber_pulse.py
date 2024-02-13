@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!venv/bin/python3
 import json
 import arrow
 from redis import asyncio as aioredis

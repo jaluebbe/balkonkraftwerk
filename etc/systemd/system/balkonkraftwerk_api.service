@@ -6,8 +6,8 @@ After=redis-server.service
 Type=simple
 User=pi
 Restart=on-failure
-ExecStart=/home/pi/balkonkraftwerk/backend_raspi.py
 WorkingDirectory=/home/pi/balkonkraftwerk
+ExecStart=/home/pi/balkonkraftwerk/backend_raspi.py
 
 [Install]
 WantedBy=multi-user.target
