@@ -15,6 +15,7 @@ async def set_and_publish_data(data):
     _data = dict(data.cache)
     _data["utc"] = int(arrow.get(_data["timestamp"]).timestamp())
     _data["utc_received"] = int(arrow.utcnow().timestamp())
+    _data["type"] = "tibber_pulse"
     _json_report = orjson.dumps(_data)
     await redis_connection.lpush("tibber_pulse", _json_report)
     await redis_connection.ltrim("tibber_pulse", 0, 30)
