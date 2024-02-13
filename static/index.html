@@ -83,6 +83,13 @@
     <div><a href="review.html">review data</a></div>
 
     <script>
+        var ws_protocol = undefined;
+        if (window.location.protocol == "https:") {
+            ws_protocol = "wss:"
+        } else {
+            ws_protocol = "ws:"
+        }
+
         function toggle_by_class(cls, on) {
             var lst = document.getElementsByClassName(cls);
             for(var i = 0; i < lst.length; ++i) {
@@ -176,8 +183,28 @@
             lastMeterMessageUtc = message.utc;
         }
 
+        function processMessage(message) {
+            producerPower.innerHTML = message.producer_power;
+            consumerPower.innerHTML = message.consumer_power;
+            if (message.unknown_consumers_power != null) {
+                unknownConsumersPower.innerHTML = message.unknown_consumers_power;
+                toggle_by_class("unknownData", true);
+            } else {
+                toggle_by_class("unknownData", false);
+            }
+            let inverterCount = message.battery_inverters.length;
+            if (inverterCount > 0) {
+                batteryPower.innerHTML = message.battery_power;
+                batteryVoltage.innerHTML = message.battery_inverters[inverterCount - 1].dc_voltage;
+                toggle_by_class("batteryData", true);
+            } else {
+                toggle_by_class("batteryData", false);
+            }
+            lastMessageUtc = message.utc;
+        }
+
         function connect_meter() {
-            ws_meter = new WebSocket("ws://" + window.location.host + "/ws/tibber_pulse");
+            ws_meter = new WebSocket(ws_protocol + "//" + window.location.host + "/ws/tibber_pulse");
             ws_meter.onmessage = function(event) {
                 let message = JSON.parse(event.data);
                 processMeterMessage(message);
@@ -191,26 +218,10 @@
         }
 
         function connect() {
-            ws = new WebSocket("ws://" + window.location.host + "/ws/balkonkraftwerk");
+            ws = new WebSocket(ws_protocol + "//" + window.location.host + "/ws/balkonkraftwerk");
             ws.onmessage = function(event) {
                 let message = JSON.parse(event.data);
-                producerPower.innerHTML = message.producer_power;
-                consumerPower.innerHTML = message.consumer_power;
-                if (message.unknown_consumers_power != null) {
-                    unknownConsumersPower.innerHTML = message.unknown_consumers_power;
-                    toggle_by_class("unknownData", true);
-                } else {
-                    toggle_by_class("unknownData", false);
-                }
-                let inverterCount = message.battery_inverters.length;
-                if (inverterCount > 0) {
-                    batteryPower.innerHTML = message.battery_power;
-                    batteryVoltage.innerHTML = message.battery_inverters[inverterCount - 1].dc_voltage;
-                    toggle_by_class("batteryData", true);
-                } else {
-                    toggle_by_class("batteryData", false);
-                }
-                lastMessageUtc = message.utc;
+                processMessage(message);
             }
             ws.onclose = function(e) {
                 console.log('Socket is closed. Reconnect will be attempted in 5 seconds.', e.reason);
