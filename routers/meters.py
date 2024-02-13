@@ -1,7 +1,6 @@
 import os
-import json
 from redis import asyncio as aioredis
-from fastapi import APIRouter, WebSocket
+from fastapi import APIRouter, WebSocket, status
 
 router = APIRouter()
 
