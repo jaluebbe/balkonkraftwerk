@@ -110,7 +110,7 @@
             responsive: true,
             displayModeBar: true
         };
-        var spinner = undefined;
+        var spinner = new Spinner();
 
         function refreshPlot(data) {
             layout.yaxis.range = [0, data.plot_limit];
@@ -177,7 +177,7 @@
         }
 
         function loadData() {
-            spinner = new Spinner().spin(reviewPlot);
+            spinner.spin(reviewPlot);
             let date = dateInput.value.split("-").join("");
             var xhr = new XMLHttpRequest();
             xhr.open('GET', "/api/review/day?date=" + date);
@@ -186,10 +186,10 @@
                 if (xhr.status === 200) {
                     let data = JSON.parse(xhr.responseText);
                     console.log(data);
-                    refreshPlot(data)
+                    refreshPlot(data);
                     refreshTable(data);
                 } else {
-                    Plotly.react("reviewPlot", [], layout, config)
+                    Plotly.react("reviewPlot", [], layout, config);
                     refreshTable({});
                 }
                 spinner.stop();
