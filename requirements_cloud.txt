@@ -1,0 +1,6 @@
+fastapi
+orjson
+redis
+requests
+uvicorn
+websockets
