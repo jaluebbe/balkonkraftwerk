@@ -1,0 +1,13 @@
+[Unit]
+Description=Push live data from balkonkraftwerk to cloud
+After=redis-server.service
+
+[Service]
+Type=simple
+User=pi
+Restart=on-failure
+WorkingDirectory=/home/pi/balkonkraftwerk
+ExecStart=/home/pi/balkonkraftwerk/push_data.py
+
+[Install]
+WantedBy=multi-user.target
