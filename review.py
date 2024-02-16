@@ -17,7 +17,7 @@ def _plot_list(power: pd.Series) -> dict[str, list]:
 
 def create_day_review(json_file: Path) -> dict:
     df = pd.read_json(json_file).set_index("utc")
-    response = {"type": "review"}
+    response = {"type": "review", "success": True}
     response["consumer_power"] = _plot_list(df["consumer_power"])
     response["producer_power"] = _plot_list(df["producer_power"])
     response["consumer_energy"] = _energy_power(df["consumer_power"], df.index)
