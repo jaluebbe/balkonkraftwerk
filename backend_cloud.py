@@ -104,7 +104,9 @@ async def get_day_review(
         return Response(content=json_string, media_type="application/json")
     _data = await get_review_from_channel(date)
     if _data is None:
-        raise HTTPException(status_code=404, detail="dataset not available.")
+        raise HTTPException(status_code=504, detail="no response from source.")
+    elif not _data["success"]:
+        raise HTTPException(status_code=404, detail="no data available.")
     await redis_connection.setex(
         name=_key,
         time=3600,

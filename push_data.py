@@ -38,10 +38,10 @@ async def serve_reviews(target_uri: str):
             datasets = [
                 _file for _file in log_directory.glob(f"power_*_{date}.json")
             ]
-            if len(datasets) != 1:
-                continue
-            response = create_day_review(datasets[0])
-            response["date"] = date
+            response = {"date": date, "success": False}
+            if len(datasets) == 1:
+                response.update(create_day_review(datasets[0]))
+                response["success"] = True
             await target_websocket.send(json.dumps(response))
     await redis_connection.close()
 
