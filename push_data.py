@@ -6,6 +6,7 @@ import logging
 import orjson
 import json
 import websockets
+import pandas as pd
 from redis import asyncio as aioredis
 from review import create_day_review
 from config import push_uri
@@ -29,6 +30,7 @@ async def push_data(target_uri: str):
 
 
 async def serve_reviews(target_uri: str):
+    redis_connection = aioredis.Redis(host=redis_host, decode_responses=True)
     async with websockets.connect(target_uri) as target_websocket:
         async for message in target_websocket:
             data = orjson.loads(message)
@@ -40,7 +42,24 @@ async def serve_reviews(target_uri: str):
             ]
             response = {"date": date, "success": False, "type": "review"}
             if len(datasets) == 1:
-                response.update(create_day_review(datasets[0]))
+                response.update(create_day_review(pd.read_json(datasets[0])))
+            if len(datasets) != 0:
+                await target_websocket.send(json.dumps(response))
+                continue
+            datasets = [
+                key
+                async for key in redis_connection.scan_iter(f"power:*:{date}")
+            ]
+            if len(datasets) != 1:
+                await target_websocket.send(json.dumps(response))
+                continue
+            reversed_data = await redis_connection.lrange(datasets[0], 0, -1)
+            if len(reversed_data) > 0:
+                data = ",\n".join(reversed_data[::-1])
+                df = pd.DataFrame(
+                    [_row for _row in orjson.loads(f"[{data}]\n")]
+                )
+                response.update(create_day_review(df))
             await target_websocket.send(json.dumps(response))
     await redis_connection.close()
 

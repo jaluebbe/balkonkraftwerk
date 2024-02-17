@@ -1,4 +1,3 @@
-from pathlib import Path
 import numpy as np
 import pandas as pd
 from config import max_inverter_limit, battery_inverter_serials
@@ -15,8 +14,8 @@ def _plot_list(power: pd.Series) -> dict[str, list]:
     return {"utc_ms": (_data.index * 1e3).to_list(), "values": _data.to_list()}
 
 
-def create_day_review(json_file: Path) -> dict:
-    df = pd.read_json(json_file).set_index("utc")
+def create_day_review(df: pd.DataFrame) -> dict:
+    df.set_index("utc", inplace=True)
     response = {"type": "review", "success": True}
     response["consumer_power"] = _plot_list(df["consumer_power"])
     response["producer_power"] = _plot_list(df["producer_power"])
