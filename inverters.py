@@ -4,15 +4,9 @@ from config import *
 
 def process_inverters_readout(report: dict) -> None:
     _inverters = open_dtu.request_inverter_data(host=open_dtu_host)
-    for _serial in producer_inverter_serials + battery_inverter_serials:
-        _inverter = _inverters.get(_serial)
-        if _inverter is None:
-            print(f"Readout of {_serial} failed.")
-            continue
-        if not _inverter["reachable"]:
-            continue
+    for _serial, _inverter in _inverters.items():
         _ac_power = _inverter["AC"]["0"]["Power"]["v"]
-        _yield_total = _inverter["AC"]["0"]["YieldTotal"]["v"]
+        _yield_total = _inverter["INV"]["0"]["YieldTotal"]["v"]
         _dc_voltage = _inverter["DC"]["0"]["Voltage"]["v"]
         _dc_current = _inverter["DC"]["0"]["Current"]["v"]
         _inverter_limit = _inverter["limit_absolute"]

@@ -3,9 +3,9 @@ import logging
 import requests
 
 
-def _request_data(url: str) -> dict | None:
+def _request_data(url: str, params: dict | None = None) -> dict | None:
     try:
-        response = requests.get(url, timeout=3.1)
+        response = requests.get(url, params=params, timeout=3.1)
     except requests.exceptions.ConnectTimeout:
         logging.error(f"Connection to {url} timed out.")
         return
@@ -38,9 +38,9 @@ def _send_command(url: str, password: str, payload: dict) -> dict | None:
         return response.json()
 
 
-def request_inverter_data(host: str) -> dict:
+def perform_inverter_request(host: str, serial: str | None = None) -> dict:
     url = f"http://{host}/api/livedata/status"
-    data = _request_data(url)
+    data = _request_data(url, params={"inv": serial})
     if data is None:
         logging.warning("Open DTU data is None.")
         return {}
@@ -48,7 +48,22 @@ def request_inverter_data(host: str) -> dict:
     if inverters is None:
         logging.warning("No data for inverters available.")
         return {}
-    return {_inverter["serial"]: _inverter for _inverter in inverters}
+    if serial is not None:
+        return inverters[0]
+    else:
+        return {
+            _inverter["serial"]: _inverter
+            for _inverter in inverters
+            if _inverter["reachable"]
+        }
+
+
+def request_inverter_data(host: str) -> dict:
+    reachable_inverters = perform_inverter_request(host)
+    return {
+        _serial: perform_inverter_request(host, _serial)
+        for _serial in reachable_inverters.keys()
+    }
 
 
 def set_inverter_limit(
