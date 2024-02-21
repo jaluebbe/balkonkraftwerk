@@ -192,6 +192,7 @@
                     Plotly.react("reviewPlot", [], layout, config);
                     refreshTable({});
                 }
+                dateInput.max = new Date().toISOString().split("T")[0];
                 spinner.stop();
             };
             xhr.send();
