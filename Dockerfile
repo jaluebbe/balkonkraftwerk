@@ -7,7 +7,7 @@ RUN pip install --upgrade pip && \
     pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
 COPY ./static /code/static
-COPY ./routers /code/routers
+COPY ./routers_cloud /code/routers_cloud
 COPY ./backend_cloud.py /code/
 
 EXPOSE 80

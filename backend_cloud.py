@@ -1,29 +1,50 @@
 #!/usr/bin/env python3
 import os
-import time
 import logging
 import asyncio
 import orjson
 import uvicorn
-from fastapi import FastAPI, Request, WebSocket, Query, Response
+from fastapi import FastAPI, Request, WebSocket
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
 from fastapi import HTTPException
-from fastapi.responses import ORJSONResponse
 from redis import asyncio as aioredis
+from starlette.middleware.sessions import SessionMiddleware
 
-import routers.meters as meters
+from routers_cloud import requires_auth
+import routers_cloud.review as review
+import routers_cloud.meters as meters
+import routers_cloud.github_auth as github_auth
 
 if "REDIS_HOST" in os.environ:
     redis_host = os.environ["REDIS_HOST"]
 else:
     redis_host = "127.0.0.1"
 
+
 app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(meters.router)
+app.include_router(review.router)
+app.include_router(github_auth.router)
+
+secret_key = os.environ["SECRET_KEY"]
+app.add_middleware(SessionMiddleware, secret_key=secret_key, https_only=True)
+
+
+@app.get("/login-test")
+async def login_test(request: Request):
+    requires_auth(request)
+    user = request.session.get("user")
+    return user
+
+
+@app.get("/logout")
+async def logout(request: Request):
+    request.session.pop("user", None)
+    return RedirectResponse("/")
 
 
 @app.get("/", include_in_schema=False)
@@ -32,7 +53,6 @@ async def root(request: Request):
 
 
 async def redis_handler(websocket: WebSocket):
-
     async def consumer_handler(
         redis_connection: aioredis.client.Redis, websocket: WebSocket
     ):
@@ -73,46 +93,6 @@ async def redis_handler(websocket: WebSocket):
 async def websocket_review(websocket: WebSocket):
     await websocket.accept()
     await redis_handler(websocket)
-
-
-async def get_review_from_channel(date: str, timeout: float = 5):
-    redis_connection = aioredis.Redis(host=redis_host, decode_responses=True)
-    pubsub = redis_connection.pubsub(ignore_subscribe_messages=True)
-    await pubsub.subscribe("power_review")
-    await redis_connection.publish(
-        "power_review_request",
-        orjson.dumps({"date": date, "type": "review_request"}),
-    )
-    timestamp = time.time()
-    while time.time() < timestamp + timeout:
-        message = await pubsub.get_message()
-        if message is not None:
-            _data = orjson.loads(message["data"])
-            if _data.get("date") == date:
-                return _data
-        await asyncio.sleep(0.01)
-
-
-@app.get("/api/review/day", response_class=ORJSONResponse)
-async def get_day_review(
-    date: str = Query("*", regex="^[0-9]{8}$"),
-):
-    redis_connection = aioredis.Redis(host=redis_host, decode_responses=True)
-    _key = f"power/review/day/{date}"
-    json_string = await redis_connection.get(_key)
-    if json_string is not None:
-        return Response(content=json_string, media_type="application/json")
-    _data = await get_review_from_channel(date)
-    if _data is None:
-        raise HTTPException(status_code=504, detail="no response from source.")
-    elif not _data["success"]:
-        raise HTTPException(status_code=404, detail="no data available.")
-    await redis_connection.setex(
-        name=_key,
-        time=3600,
-        value=orjson.dumps(_data, option=orjson.OPT_SERIALIZE_NUMPY),
-    )
-    return ORJSONResponse(_data)
 
 
 if __name__ == "__main__":

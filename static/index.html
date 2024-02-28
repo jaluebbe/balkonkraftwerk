@@ -80,7 +80,11 @@
     </table>
     <input type="checkbox" id="preventSleep" name="preventSleep" onchange="preventSleepChanged()">
     <label for="preventSleep">prevent standby</label>
-    <div><a href="review.html">review data</a></div>
+    <p><a href="review.html">Review data</a></p>
+    <p>Status: <span id="connection_status">unknown</span></p>
+    <p><a href="/github-login">Login with GitHub</a></p>
+    <p><a href="/logout">Logout</a></p>
+    <p><a href="https://github.com/jaluebbe/balkonkraftwerk">Source on GitHub</a></p>
 
     <script>
         var ws_protocol = undefined;
@@ -203,6 +207,7 @@
         function connect() {
             ws = new WebSocket(ws_protocol + "//" + window.location.host + "/ws");
             ws.onmessage = function(event) {
+                connection_status.innerHTML = "connected";
                 let message = JSON.parse(event.data);
                 if (message.type == "tibber_pulse") {
                     processMeterMessage(message);
@@ -212,7 +217,15 @@
                 lastMessageUtc = message.utc;
             }
             ws.onclose = function(e) {
-                console.log('Socket is closed. Reconnect will be attempted in 5 seconds.', e.reason);
+                if (e.code == 1008) {
+                    let statusMessage = "User not identified. Socket is closed.";
+                    console.error(statusMessage);
+                    connection_status.innerHTML = statusMessage;
+                    return
+                }
+                let statusMessage = "Socket is closed. Reconnect will be attempted in 5 seconds.";
+                console.log(statusMessage, e.reason);
+                connection_status.innerHTML = statusMessage;
                 setTimeout(function() {
                     connect();
                 }, 5000);
