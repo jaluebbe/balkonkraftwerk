@@ -34,7 +34,7 @@ app.include_router(meters.router)
 
 @app.get("/", include_in_schema=False)
 async def root(request: Request):
-    return RedirectResponse("/static/index.html")
+    return RedirectResponse("/static/index_raspi.html")
 
 
 @app.get("/api/current_power")

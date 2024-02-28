@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="utf-8">
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+    <title>Live data</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        table,
+        th,
+        td {
+            border: 1px solid black;
+        }
+
+        td {
+            text-align: center;
+        }
+
+        body {
+            font-family: Verdana, Geneva, Arial, sans-serif;
+            font-size: 16px;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="gauge.min.js"></script>
+    <script src="no_sleep.min.js"></script>
+    <div style="text-align: center;"><canvas id="canvas-preview" width="380" height="230"></canvas></div>
+    <table style="width:100%;">
+        <tr>
+            <th colspan="3">Electricity meter</th>
+        </tr>
+        <tr>
+            <td style="width: 40%">Consumption</td>
+            <td style="width: 30%"><span id="meterConsumptionPower"></span>&nbsp;W</td>
+            <td style="width: 30%" class="meterConsumptionAvailable"><span id="meterConsumption"></span>&nbsp;kWh</td>
+        </tr>
+        <tr>
+            <td>Production</td>
+            <td><span id="meterProductionPower"></span>&nbsp;W</td>
+            <td class="meterConsumptionAvailable"><span id="meterProduction"></span>&nbsp;kWh</td>
+        </tr>
+        <tr class="extendedMeterData" style="display: none;">
+            <td>L1</td>
+            <td><span id="voltageL1"></span>&nbsp;V</td>
+            <td><span id="currentL1"></span>&nbsp;A</td>
+        </tr>
+        <tr class="extendedMeterData" style="display: none;">
+            <td>L2</td>
+            <td><span id="voltageL2"></span>&nbsp;V</td>
+            <td><span id="currentL2"></span>&nbsp;A</td>
+        </tr>
+        <tr class="extendedMeterData" style="display: none;">
+            <td>L3</td>
+            <td><span id="voltageL3"></span>&nbsp;V</td>
+            <td><span id="currentL3"></span>&nbsp;A</td>
+        </tr>
+        <tr>
+            <th colspan="3">Balcony power plant</th>
+        </tr>
+        <tr>
+            <td colspan="2">Solar power</td>
+            <td><span id="producerPower"></span>&nbsp;W</td>
+        </tr>
+        <tr class="batteryData" style="display: none;">
+            <td>From battery</td>
+            <td><span id="batteryVoltage"></span>&nbsp;V</td>
+            <td><span id="batteryPower"></span>&nbsp;W</td>
+        </tr>
+        <tr>
+            <td colspan="2">Known consumers</td>
+            <td><span id="consumerPower"></span>&nbsp;W</td>
+        </tr>
+        <tr class="unknownData" style="display: none;">
+            <td colspan="2">Unknown consumers</td>
+            <td><span id="unknownConsumersPower"></span>&nbsp;W</td>
+        </tr>
+    </table>
+    <input type="checkbox" id="preventSleep" name="preventSleep" onchange="preventSleepChanged()">
+    <label for="preventSleep">prevent standby</label>
+    <p><a href="review.html">Review data</a></p>
+    <p>Status: <span id="connection_status">unknown</span></p>
+
+    <script>
+        var ws_protocol = undefined;
+        if (window.location.protocol == "https:") {
+            ws_protocol = "wss:"
+        } else {
+            ws_protocol = "ws:"
+        }
+
+        function toggle_by_class(cls, on) {
+            var lst = document.getElementsByClassName(cls);
+            for(var i = 0; i < lst.length; ++i) {
+                lst[i].style.display = on ? '' : 'none';
+            }
+        }
+
+        var noSleep = new NoSleep();
+
+        function preventSleepChanged() {
+            if (preventSleep.checked) {
+                noSleep.enable();
+            } else {
+                noSleep.disable();
+            }
+        }
+
+        const gaugeOpts = {
+            angle: 0.1,
+            lineWidth: 0.44,
+            pointer: {
+                length: 0.63,
+                strokeWidth: 0.035
+            },
+            limitMax: true,
+            limitMin: true,
+            strokeColor: '#E0E0E0',
+            staticLabels: {
+                font: "14px sans-serif",
+                labels: [-200, -150, -100, -50, 0, 50, 100, 150, 200],
+                color: "#000000",
+                fractionDigits: 0
+            },
+            renderTicks: {
+                divisions: 8,
+                divWidth: 1.6,
+                divLength: 0.5,
+                divColor: '#333333',
+                subDivisions: 5,
+                subLength: 0.3,
+                subWidth: 0.4,
+                subColor: '#666666'
+            },
+            staticZones: [{
+                    strokeStyle: "#30B32D",
+                    min: -200,
+                    max: 0
+                }, // Green
+                {
+                    strokeStyle: "#FFDD00",
+                    min: 0,
+                    max: 200
+                } // Yellow
+            ]
+        };
+        const canvasTarget = document.getElementById('canvas-preview');
+        const gauge = new Gauge(canvasTarget).setOptions(gaugeOpts);
+        gauge.maxValue = 200;
+        gauge.setMinValue(-200);
+        gauge.set(0);
+        var lastMessageUtc = undefined;
+
+        function processMeterMessage(message) {
+            let consumptionPower = parseFloat(message.power)
+            let productionPower = parseFloat(message.powerProduction)
+            gauge.set(consumptionPower - productionPower);
+            if (message.voltagePhase1 != null) {
+                voltageL1.innerHTML = parseFloat(message.voltagePhase1).toFixed(1);
+                voltageL2.innerHTML = parseFloat(message.voltagePhase2).toFixed(1);
+                voltageL3.innerHTML = parseFloat(message.voltagePhase3).toFixed(1);
+                currentL1.innerHTML = parseFloat(message.currentL1).toFixed(2);
+                currentL2.innerHTML = parseFloat(message.currentL2).toFixed(2);
+                currentL3.innerHTML = parseFloat(message.currentL3).toFixed(2);
+                toggle_by_class("extendedMeterData", true);
+            } else {
+                toggle_by_class("extendedMeterData", false);
+            }
+            if (message.accumulatedConsumption != null &&
+                message.accumulatedProduction != null &&
+                message.accumulatedConsumption + message.accumulatedProduction > 0
+            ) {
+                meterConsumption.innerHTML = parseFloat(message.lastMeterConsumption).toFixed(2);
+                meterProduction.innerHTML = parseFloat(message.lastMeterProduction).toFixed(2);
+                toggle_by_class("meterConsumptionAvailable", true);
+            } else {
+                toggle_by_class("meterConsumptionAvailable", false);
+            }
+            meterConsumptionPower.innerHTML = consumptionPower;
+            meterProductionPower.innerHTML = productionPower;
+        }
+
+        function processMessage(message) {
+            producerPower.innerHTML = message.producer_power;
+            consumerPower.innerHTML = message.consumer_power;
+            if (message.unknown_consumers_power != null) {
+                unknownConsumersPower.innerHTML = message.unknown_consumers_power;
+                toggle_by_class("unknownData", true);
+            } else {
+                toggle_by_class("unknownData", false);
+            }
+            let inverterCount = message.battery_inverters.length;
+            if (inverterCount > 0) {
+                batteryPower.innerHTML = message.battery_power;
+                batteryVoltage.innerHTML = message.battery_inverters[inverterCount - 1].dc_voltage;
+                toggle_by_class("batteryData", true);
+            } else {
+                toggle_by_class("batteryData", false);
+            }
+        }
+
+        function connect() {
+            ws = new WebSocket(ws_protocol + "//" + window.location.host + "/ws");
+            ws.onmessage = function(event) {
+                connection_status.innerHTML = "connected";
+                let message = JSON.parse(event.data);
+                if (message.type == "tibber_pulse") {
+                    processMeterMessage(message);
+                } else {
+                    processMessage(message);
+                }
+                lastMessageUtc = message.utc;
+            }
+            ws.onclose = function(e) {
+                let statusMessage = "Socket is closed. Reconnect will be attempted in 5 seconds.";
+                console.log(statusMessage, e.reason);
+                connection_status.innerHTML = statusMessage;
+                setTimeout(function() {
+                    connect();
+                }, 5000);
+            }
+        }
+
+        function checkConnection() {
+            const utcNow = Date.now() / 1e3;
+            if (lastMessageUtc != null && utcNow - lastMessageUtc > 30) {
+                ws.onclose = null;
+                connect();
+            }
+        }
+
+        connect();
+        onfocus = (event) => {
+            checkConnection()
+        };
+    </script>
+</body>
+
+</html>
