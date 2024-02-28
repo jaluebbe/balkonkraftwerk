@@ -161,3 +161,6 @@ cython_debug/
 
 # don't commit any private configuration
 config.py
+
+# Mac OS
+.DS_Store
