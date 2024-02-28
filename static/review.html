@@ -40,6 +40,7 @@
         <div>Select date&nbsp;
             <input type="date" id="dateInput" name="dateInput" onchange="loadData()">
             <button onclick="loadData()">load</button>
+            Status: <span id="connection_status">unknown</span>
         </div>
         <div id="reviewPlot"></div>
         <table style="width:100%;">
@@ -191,7 +192,15 @@
                     console.log(data);
                     refreshPlot(data);
                     refreshTable(data);
+                    connection_status.innerHTML = "Data received for " + data.date;
                 } else {
+                    if (xhr.status === 401) {
+                        let data = JSON.parse(xhr.responseText);
+                        connection_status.innerHTML = data.detail;
+                    } else {
+                        connection_status.innerHTML = "communication problem"
+                        console.error(xhr.status + ": " + xhr.response);
+                    }
                     Plotly.react("reviewPlot", [], layout, config);
                     refreshTable({});
                 }
