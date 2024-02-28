@@ -9,9 +9,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
 from redis import asyncio as aioredis
 
-import routers.datasets as datasets
-import routers.review as review
-import routers.meters as meters
+import routers_raspi.datasets as datasets
+import routers_raspi.review as review
+import routers_raspi.meters as meters
 
 hostname = socket.gethostname()
 if "REDIS_HOST" in os.environ:
