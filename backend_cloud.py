@@ -2,6 +2,7 @@
 import os
 import logging
 import asyncio
+import httpx
 import orjson
 import uvicorn
 from fastapi import FastAPI, Request, WebSocket
@@ -11,7 +12,6 @@ from fastapi import HTTPException
 from redis import asyncio as aioredis
 from starlette.middleware.sessions import SessionMiddleware
 
-from routers_cloud import requires_auth
 import routers_cloud.review as review
 import routers_cloud.meters as meters
 import routers_cloud.github_auth as github_auth
@@ -34,13 +34,6 @@ secret_key = os.environ["SECRET_KEY"]
 app.add_middleware(SessionMiddleware, secret_key=secret_key, https_only=True)
 
 
-@app.get("/login-test")
-async def login_test(request: Request):
-    requires_auth(request)
-    user = request.session.get("user")
-    return user
-
-
 @app.get("/logout")
 async def logout(request: Request):
     request.session.pop("user", None)
@@ -52,24 +45,24 @@ async def root(request: Request):
     return RedirectResponse("/static/index.html")
 
 
-async def redis_handler(websocket: WebSocket):
+async def redis_handler(websocket: WebSocket, email: str):
     async def consumer_handler(
         redis_connection: aioredis.client.Redis, websocket: WebSocket
     ):
         async for message in websocket.iter_text():
             data = orjson.loads(message)
             if data.get("type") == "tibber_pulse":
-                channel = "tibber_pulse"
+                channel = f"tibber_pulse:{email}"
             elif data.get("type") == "review":
-                channel = "power_review"
+                channel = f"power_review:{email}"
             else:
-                channel = "balkonkraftwerk"
+                channel = f"balkonkraftwerk:{email}"
             await redis_connection.publish(channel, message)
 
     async def producer_handler(
         pubsub: aioredis.client.PubSub, websocket: WebSocket
     ):
-        await pubsub.subscribe("power_review_request")
+        await pubsub.subscribe(f"power_review_request:{email}")
         async for message in pubsub.listen():
             await websocket.send_text(message["data"])
 
@@ -89,10 +82,26 @@ async def redis_handler(websocket: WebSocket):
     await redis_connection.close()
 
 
+async def validate_token(access_token: str) -> str:
+    async with httpx.AsyncClient() as client:
+        headers = {
+            "Accept": "application/json",
+            "Authorization": f"Bearer {access_token}",
+        }
+        response = await client.get(
+            "https://api.github.com/user/emails", headers=headers
+        )
+    email = [
+        _item["email"] for _item in response.json() if _item["primary"] == True
+    ][0]
+    return email
+
+
 @app.websocket("/ws/push")
-async def websocket_review(websocket: WebSocket):
+async def websocket_review(websocket: WebSocket, token: str):
+    email = await validate_token(token)
     await websocket.accept()
-    await redis_handler(websocket)
+    await redis_handler(websocket, email)
 
 
 if __name__ == "__main__":

@@ -5,7 +5,6 @@ import orjson
 from fastapi import APIRouter, Query, HTTPException, Response, Request
 from fastapi.responses import ORJSONResponse
 from redis import asyncio as aioredis
-from routers_cloud import requires_auth
 
 if "REDIS_HOST" in os.environ:
     redis_host = os.environ["REDIS_HOST"]
@@ -14,13 +13,18 @@ else:
 
 router = APIRouter()
 
+def extract_email(request: Request):
+    email = request.session.get("user")
+    if not email:
+        raise HTTPException(status_code=401, detail="unidentified user")
+    return email
 
-async def get_review_from_channel(date: str, timeout: float = 5):
+async def get_review_from_channel(date: str, email: str, timeout: float = 5):
     redis_connection = aioredis.Redis(host=redis_host, decode_responses=True)
     pubsub = redis_connection.pubsub(ignore_subscribe_messages=True)
-    await pubsub.subscribe("power_review")
+    await pubsub.subscribe(f"power_review:{email}")
     await redis_connection.publish(
-        "power_review_request",
+        f"power_review_request:{email}",
         orjson.dumps({"date": date, "type": "review_request"}),
     )
     timestamp = time.time()
@@ -37,13 +41,13 @@ async def get_review_from_channel(date: str, timeout: float = 5):
 async def get_day_review(
     request: Request, date: str = Query("*", regex="^[0-9]{8}$")
 ):
-    requires_auth(request)
+    email = extract_email(request)
     redis_connection = aioredis.Redis(host=redis_host, decode_responses=True)
-    _key = f"power/review/day/{date}"
+    _key = f"power/review/day/{date}:{email}"
     json_string = await redis_connection.get(_key)
     if json_string is not None:
         return Response(content=json_string, media_type="application/json")
-    _data = await get_review_from_channel(date)
+    _data = await get_review_from_channel(date, email)
     if _data is None:
         raise HTTPException(status_code=504, detail="no response from source.")
     elif not _data["success"]:

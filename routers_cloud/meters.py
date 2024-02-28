@@ -27,9 +27,10 @@ async def websocket_endpoint(websocket: WebSocket, channel: str | None = None):
     redis_connection = aioredis.Redis(host=redis_host, decode_responses=True)
     pubsub = redis_connection.pubsub(ignore_subscribe_messages=True)
     if channel is None:
-        await pubsub.subscribe(*supported_channels)
+        target_channels = (f"{_channel}:{user}" for _channel in supported_channels)
+        await pubsub.subscribe(*target_channels)
     else:
-        await pubsub.subscribe(channel)
+        await pubsub.subscribe(f"{channel}:{user}")
     async for message in pubsub.listen():
         await websocket.send_text(message["data"])
     await redis_connection.close()
