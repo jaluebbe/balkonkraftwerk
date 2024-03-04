@@ -9,7 +9,7 @@ import websockets
 import pandas as pd
 from redis import asyncio as aioredis
 from review import create_day_review
-from config import push_uri
+from config import push_uri, access_token
 
 if "REDIS_HOST" in os.environ:
     redis_host = os.environ["REDIS_HOST"]
@@ -78,4 +78,5 @@ async def main(target_uri: str):
 
 
 if __name__ == "__main__":
-    asyncio.run(main(push_uri))
+    uri = f"{push_uri}?token={access_token}"
+    asyncio.run(main(uri))
