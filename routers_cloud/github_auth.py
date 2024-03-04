@@ -7,6 +7,7 @@ router = APIRouter()
 
 github_client_id = os.environ["GITHUB_CLIENT_ID"]
 github_client_secret = os.environ["GITHUB_CLIENT_SECRET"]
+github_star_repo = os.environ["GITHUB_STAR_REPO"]
 
 
 @router.get("/github-login")
@@ -34,13 +35,21 @@ async def github_code(request: Request, code: str):
         )
     response_json = response.json()
     access_token = response_json["access_token"]
+    headers.update({"Authorization": f"Bearer {access_token}"})
     async with httpx.AsyncClient() as client:
-        headers.update({"Authorization": f"Bearer {access_token}"})
-        response = await client.get(
+        response_email = await client.get(
             "https://api.github.com/user/emails", headers=headers
         )
+        if github_star_repo is not None:
+            response_starred = await client.get(
+                f"https://api.github.com/user/starred/{github_star_repo}",
+                headers=headers,
+            )
     email = [
-        _item["email"] for _item in response.json() if _item["primary"] == True
+        _item["email"]
+        for _item in response_email.json()
+        if _item["primary"] == True
     ][0]
-    request.session["user"] = email
+    if github_star_repo is None or response_starred.status_code == 204:
+        request.session["user"] = email
     return RedirectResponse("/")
