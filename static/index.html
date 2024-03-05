@@ -78,8 +78,6 @@
             <td><span id="unknownConsumersPower"></span>&nbsp;W</td>
         </tr>
     </table>
-    <input type="checkbox" id="preventSleep" name="preventSleep" onchange="preventSleepChanged()">
-    <label for="preventSleep">prevent standby</label>
     <p><a href="review.html">Review data</a></p>
     <p>Status: <span id="connection_status">unknown</span></p>
     <p><a href="/github-login">Login with GitHub</a></p>
@@ -87,6 +85,7 @@
     <p><a href="https://github.com/jaluebbe/balkonkraftwerk">Source on GitHub</a></p>
 
     <script>
+        var noSleep = new NoSleep();
         var ws = undefined;
         var ws_protocol = undefined;
         if (window.location.protocol == "https:") {
@@ -99,16 +98,6 @@
             var lst = document.getElementsByClassName(cls);
             for(var i = 0; i < lst.length; ++i) {
                 lst[i].style.display = on ? '' : 'none';
-            }
-        }
-
-        var noSleep = new NoSleep();
-
-        function preventSleepChanged() {
-            if (preventSleep.checked) {
-                noSleep.enable();
-            } else {
-                noSleep.disable();
             }
         }
 
@@ -237,14 +226,22 @@
             const utcNow = Date.now() / 1e3;
             if (lastMessageUtc != null && utcNow - lastMessageUtc > 30) {
                 ws.onclose = null;
+                ws.onmessage = null;
+                ws.close(1000);
                 connect();
             }
         }
 
         connect();
+
         onfocus = (event) => {
             checkConnection()
         };
+
+        document.addEventListener('click', function enableNoSleep() {
+            document.removeEventListener('click', enableNoSleep, false);
+            noSleep.enable();
+        }, false);
     </script>
 </body>
 
