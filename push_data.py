@@ -29,12 +29,13 @@ async def push_data(target_uri: str):
 
 
 async def serve_reviews(target_uri: str):
-    redis_connection = aioredis.Redis(host=redis_host)
+    redis_connection = aioredis.Redis(host=redis_host, decode_responses=True)
     async with websockets.connect(target_uri) as target_websocket:
         async for message in target_websocket:
             data = orjson.loads(message)
             if data.get("type") != "review_request":
                 continue
+            logging.debug(f"review request received: {data}")
             date = data["date"]
             datasets = [
                 _file for _file in log_directory.glob(f"power_*_{date}.json")
