@@ -31,14 +31,11 @@ def process_unknown_consumers(report: dict) -> None:
             _battery_power = 0
         else:
             _battery_power = report["battery_power"]
-        report["unknown_consumers_power"] = max(
-            0,
-            (
-                _meter_power
-                - report["consumer_power"]
-                + report["producer_power"]
-                + _battery_power
-            ),
+        report["unknown_consumers_power"] = (
+            _meter_power
+            - report["consumer_power"]
+            + report["producer_power"]
+            + _battery_power
         )
     else:
         report["unknown_consumers_power"] = 0
