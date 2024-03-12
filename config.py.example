@@ -23,10 +23,12 @@ scheduled_consumers = [
     },
 ]
 consider_unknown_consumers = False
+unknown_consumers_offset = 0
 producers = [
     {"host": "192.168.1.104", "name": "west balcony", "type": "shelly", "generation": 2},
 ]
 producer_inverter_serials = []
 battery_inverter_serials = []
-newmove_one_hosts = []
+newmove_one_host = None
+tibber_api_key = None
 interval = 30
