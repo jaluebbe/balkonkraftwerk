@@ -1,10 +1,9 @@
 import arrow
 import tibber
-from config import tibber_api_key
 
 
 class tibber_price:
-    def __init__(self):
+    def __init__(self, tibber_api_key):
         self.account = tibber.Account(tibber_api_key)
 
     def get_price(self):
