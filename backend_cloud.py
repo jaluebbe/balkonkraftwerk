@@ -49,7 +49,7 @@ async def redis_handler(websocket: WebSocket, email: str):
     async def consumer_handler(
         redis_connection: aioredis.client.Redis, websocket: WebSocket
     ):
-        async for message in websocket.iter_text():
+        async for message in websocket.iter_bytes():
             data = orjson.loads(message)
             if data.get("type") == "tibber_pulse":
                 channel = f"tibber_pulse:{email}"

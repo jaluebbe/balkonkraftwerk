@@ -4,7 +4,6 @@ import asyncio
 from pathlib import Path
 import logging
 import orjson
-import json
 import websockets
 import pandas as pd
 from redis import asyncio as aioredis
@@ -20,7 +19,7 @@ log_directory = Path("../logs_json")
 
 
 async def push_data(target_uri: str):
-    redis_connection = aioredis.Redis(host=redis_host, decode_responses=True)
+    redis_connection = aioredis.Redis(host=redis_host)
     pubsub = redis_connection.pubsub(ignore_subscribe_messages=True)
     await pubsub.subscribe("balkonkraftwerk", "tibber_pulse")
     async with websockets.connect(target_uri) as target_websocket:
@@ -36,6 +35,7 @@ async def serve_reviews(target_uri: str):
             data = orjson.loads(message)
             if data.get("type") != "review_request":
                 continue
+            logging.debug(f"review request received: {data}")
             date = data["date"]
             datasets = [
                 _file for _file in log_directory.glob(f"power_*_{date}.json")
@@ -44,14 +44,14 @@ async def serve_reviews(target_uri: str):
             if len(datasets) == 1:
                 response.update(create_day_review(pd.read_json(datasets[0])))
             if len(datasets) != 0:
-                await target_websocket.send(json.dumps(response))
+                await target_websocket.send(orjson.dumps(response))
                 continue
             datasets = [
                 key
                 async for key in redis_connection.scan_iter(f"power:*:{date}")
             ]
             if len(datasets) != 1:
-                await target_websocket.send(json.dumps(response))
+                await target_websocket.send(orjson.dumps(response))
                 continue
             reversed_data = await redis_connection.lrange(datasets[0], 0, -1)
             if len(reversed_data) > 0:
@@ -60,7 +60,7 @@ async def serve_reviews(target_uri: str):
                     [_row for _row in orjson.loads(f"[{data}]\n")]
                 )
                 response.update(create_day_review(df))
-            await target_websocket.send(json.dumps(response))
+            await target_websocket.send(orjson.dumps(response))
     await redis_connection.close()
 
 

@@ -11,10 +11,13 @@ from producers import process_producers
 from inverters import process_inverters_readout, process_inverter_limits
 from newmove_one import read_newmove_one
 from unknown_consumers import process_unknown_consumers
+from tibber_price import tibber_price
 from config import *
 
 redis_connection = redis.Redis(decode_responses=True)
 hostname = socket.gethostname()
+if tibber_api_key is not None:
+    tp = tibber_price(tibber_api_key)
 
 while True:
     _report = {
@@ -30,18 +33,18 @@ while True:
         "unknown_consumers_power": 0,
     }
 
+    # read out newmove one if available
+    if newmove_one_host is not None:
+        _report["newmove_one"] = read_newmove_one(newmove_one_host)
     process_consumers(_report)
     process_producers(_report)
     process_inverters_readout(_report)
     process_unknown_consumers(_report)
-    # read out newmove one if available
-    _newmove_one_status = [read_newmove_one(_host) for _host in newmove_one_hosts]
-    if len(_newmove_one_status) > 0:
-        _report["newmove_one"] = _newmove_one_status
-
     _required_limit = _report["consumer_power"] - _report["producer_power"]
     if consider_unknown_consumers:
-        _required_limit += _report["unknown_consumers_power"]
+        _required_limit += max(
+            0, _report["unknown_consumers_power"] - unknown_consumers_offset
+        )
     if _report.get("battery_power") is not None:
         _report["required"] = round(
             _required_limit - _report["battery_power"], 1
@@ -58,6 +61,8 @@ while True:
         if _report.get(_key) is not None:
             _report[_key] = round(_report[_key], 1)
     _key = "power:{}:{}".format(hostname, time.strftime("%Y%m%d"))
+    if tibber_api_key is not None:
+        _report["tibber_price"] = tp.get_price()
     _json_report = orjson.dumps(_report, option=orjson.OPT_SERIALIZE_NUMPY)
     redis_connection.set("required_power", _report["required"])
     redis_connection.lpush(_key, _json_report)
