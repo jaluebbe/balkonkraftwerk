@@ -1,1 +1,1 @@
-* *     * * *   root    /home/pi/balkonkraftwerk/check_tibber.py || systemctl restart tibber_pulse.service
+* *     * * *   root    /home/balkonkraftwerk/balkonkraftwerk/check_tibber.py || systemctl restart tibber_pulse.service

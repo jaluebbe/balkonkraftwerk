@@ -4,10 +4,10 @@ After=redis-server.service
 
 [Service]
 Type=simple
-User=pi
+User=balkonkraftwerk
 Restart=on-failure
-WorkingDirectory=/home/pi/balkonkraftwerk
-ExecStart=/home/pi/balkonkraftwerk/balkonkraftwerk.py
+WorkingDirectory=/home/balkonkraftwerk/balkonkraftwerk
+ExecStart=/home/balkonkraftwerk/balkonkraftwerk/balkonkraftwerk.py
 
 [Install]
 WantedBy=multi-user.target
