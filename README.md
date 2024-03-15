@@ -18,7 +18,7 @@ sudo apt update
 sudo apt upgrade -y
 sudo apt dist-upgrade -y
 sudo apt autoremove -y
-sudo apt install git redis-server python3-pip python3-venv iptables python3-requests libopenblas0 -y
+sudo apt install git redis-server python3-redis python3-pip python3-venv iptables python3-requests python3-numpy libopenblas0 -y
 sudo useradd -m balkonkraftwerk
 ```
 
