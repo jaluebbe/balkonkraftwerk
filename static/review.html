@@ -97,6 +97,13 @@
                     text: "power / W"
                 }
             },
+            yaxis2: {
+                title: {
+                    text: "price / €",
+                },
+                overlaying: 'y',
+                side: 'right'
+            },
             legend: {
                 yanchor: "top",
                 y: 0.99,
@@ -160,6 +167,21 @@
                     stackgroup: 'producer',
                     x: data.battery_power.utc_ms,
                     y: data.battery_power.values,
+                    type: 'scatter'
+                });
+            }
+            if (data.price != null) {
+                plotData.push({
+                    mode: 'lines',
+                    name: '💰→🔌',
+                    line: {
+                        color: '#ff0000',
+                        shape: 'hv',
+                        dash: 'dot'
+                    },
+                    yaxis: 'y2',
+                    x: data.price.utc_ms,
+                    y: data.price.values,
                     type: 'scatter'
                 });
             }
