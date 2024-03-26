@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import arrow
 from config import max_inverter_limit, battery_inverter_serials
 
 max_battery_inverter_power = max_inverter_limit * len(battery_inverter_serials)
@@ -44,4 +45,13 @@ def create_day_review(df: pd.DataFrame) -> dict:
         response["battery_energy"] = _energy_power(
             df["battery_power"], df.index
         )
+    if "tibber_price" in df.columns:
+        df_price = pd.DataFrame(df["tibber_price"].drop_duplicates().to_list())
+        df_price["utc"] = df_price["startsAt"].apply(
+            lambda x: arrow.get(x).timestamp()
+        )
+        df_price.set_index("utc", inplace=True)
+        max_utc = df_price.index.max()
+        df_price.loc[max_utc + 3599] = df_price.loc[max_utc]
+        response["price"] = _plot_list(df_price["total"])
     return response
