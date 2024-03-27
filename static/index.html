@@ -90,8 +90,18 @@
         <span id="connection_status">Status unknown</span>
     </p>
     <p><a href="https://github.com/jaluebbe/balkonkraftwerk">Source on GitHub</a></p>
-
+    <p id="privacy_statement"></p>
     <script>
+        function addPrivacyStatement() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('HEAD', "./datenschutz.html");
+            xhr.onload = function() {
+                if (xhr.status === 200)
+                    privacy_statement.innerHTML = '<a href="./datenschutz.html" target="_blank">Impressum & Datenschutzerkl&auml;rung</a>';
+            }
+            xhr.send();
+        }
+        addPrivacyStatement();
         var noSleep = new NoSleep();
         var ws = undefined;
         var ws_protocol = undefined;
