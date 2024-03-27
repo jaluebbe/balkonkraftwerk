@@ -46,12 +46,16 @@ def create_day_review(df: pd.DataFrame) -> dict:
             df["battery_power"], df.index
         )
     if "tibber_price" in df.columns:
-        df_price = pd.DataFrame(df["tibber_price"].drop_duplicates().to_list())
-        df_price["utc"] = df_price["startsAt"].apply(
-            lambda x: arrow.get(x).timestamp()
+        df_price = pd.DataFrame(
+            df["tibber_price"].dropna().drop_duplicates().to_list()
         )
-        df_price.set_index("utc", inplace=True)
-        max_utc = df_price.index.max()
-        df_price.loc[max_utc + 3599] = df_price.loc[max_utc]
-        response["price"] = _plot_list(df_price["total"])
+        df_price.dropna(inplace=True)
+        if "startsAt" in df_price.columns:
+            df_price["utc"] = df_price["startsAt"].apply(
+                lambda x: arrow.get(x).timestamp()
+            )
+            df_price.set_index("utc", inplace=True)
+            max_utc = df_price.index.max()
+            df_price.loc[max_utc + 3599] = df_price.loc[max_utc]
+            response["price"] = _plot_list(df_price["total"])
     return response

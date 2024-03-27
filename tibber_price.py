@@ -8,7 +8,9 @@ class tibber_price:
 
     def get_price(self):
         price_info = self.account.homes[0].current_subscription.price_info
-        if (
+        if price_info.current.starts_at is None:
+            self.account.update()
+        elif (
             arrow.now() - arrow.get(price_info.current.starts_at)
         ).seconds >= 3600:
             self.account.update()
