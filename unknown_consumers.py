@@ -19,7 +19,9 @@ def collect_meter_power(utc_start: int):
 
 
 def process_unknown_consumers(report: dict) -> None:
-    _recent_meter_power = collect_meter_power(report["utc"] - 0.5 * interval)
+    _recent_meter_power = collect_meter_power(
+        report["utc"] - unknown_consumers_interval
+    )
     if len(_recent_meter_power) > 0:
         _meter_data = json.loads(
             redis_connection.lrange("tibber_pulse", 0, 0)[0]

@@ -32,3 +32,4 @@ battery_inverter_serials = []
 newmove_one_host = None
 tibber_api_key = None
 interval = 30
+unknown_consumers_interval = 45
