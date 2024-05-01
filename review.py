@@ -45,6 +45,15 @@ def create_day_review(df: pd.DataFrame) -> dict:
         response["battery_energy"] = _energy_power(
             df["battery_power"], df.index
         )
+    if "meter_consumed" in df.columns:
+        _meter_consumed = df["meter_consumed"].dropna()
+        response["meter_consumption_day"] = float(
+            round(_meter_consumed.max() - _meter_consumed.min(), 3)
+        )
+        _meter_produced = df["meter_produced"].dropna()
+        response["meter_production_day"] = float(
+            round(_meter_produced.max() - _meter_produced.min(), 3)
+        )
     if "tibber_price" in df.columns:
         df_price = pd.DataFrame(
             df["tibber_price"].dropna().drop_duplicates().to_list()
