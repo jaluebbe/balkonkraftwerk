@@ -28,7 +28,7 @@ producers = [
     {"host": "192.168.1.104", "name": "west balcony", "type": "shelly", "generation": 2},
 ]
 producer_inverter_serials = []
-battery_inverter_serials = []
+battery_inverter_serial = None
 newmove_one_host = None
 tibber_api_key = None
 interval = 30

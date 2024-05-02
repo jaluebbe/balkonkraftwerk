@@ -189,10 +189,9 @@
             } else {
                 toggle_by_class("unknownData", false);
             }
-            let inverterCount = message.battery_inverters.length;
-            if (inverterCount > 0) {
+            if (message.battery_inverter != undefined) {
                 batteryPower.innerHTML = message.battery_power;
-                batteryVoltage.innerHTML = message.battery_inverters[inverterCount - 1].dc_voltage;
+                batteryVoltage.innerHTML = message.battery_inverter.dc_voltage;
                 toggle_by_class("batteryData", true);
             } else {
                 toggle_by_class("batteryData", false);

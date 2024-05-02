@@ -8,7 +8,7 @@ import open_dtu
 import mystrom_switch
 from consumers import process_consumers
 from producers import process_producers
-from inverters import process_inverters_readout, process_inverter_limits
+from inverters import process_inverters_readout, process_inverter_limit
 from newmove_one import read_newmove_one
 from unknown_consumers import process_unknown_consumers
 from tibber_price import tibber_price
@@ -27,7 +27,6 @@ while True:
         "producers": [],
         "scheduled_consumers": [],
         "producer_inverters": [],
-        "battery_inverters": [],
         "consumer_power": min_power,
         "producer_power": 0,
         "unknown_consumers_power": 0,
@@ -49,9 +48,9 @@ while True:
         _report["required"] = round(
             _required_limit - _report["battery_power"], 1
         )
+        process_inverter_limit(_report, _required_limit)
     else:
         _report["required"] = round(_required_limit, 1)
-    process_inverter_limits(_report, _required_limit)
     for _key in [
         "consumer_power",
         "producer_power",
