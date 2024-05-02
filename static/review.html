@@ -194,7 +194,7 @@
             energyProduced.innerHTML = parseFloat(data.producer_energy).toFixed(2);
             energyUnused.innerHTML = parseFloat(data.unused_energy).toFixed(2);
             energyMissing.innerHTML = parseFloat(data.missing_energy).toFixed(2);
-            if (data.max_battery_inverter_power == null) {
+            if (data.battery_energy == null) {
                 toggle_by_class("batteryAvailable", false);
                 return
             }
