@@ -19,7 +19,7 @@ def extract_email(request: Request):
         raise HTTPException(status_code=401, detail="unidentified user")
     return email
 
-async def get_review_from_channel(date: str, email: str, timeout: float = 5):
+async def get_review_from_channel(date: str, email: str, timeout: float = 10):
     redis_connection = aioredis.Redis(host=redis_host, decode_responses=True)
     pubsub = redis_connection.pubsub(ignore_subscribe_messages=True)
     await pubsub.subscribe(f"power_review:{email}")
