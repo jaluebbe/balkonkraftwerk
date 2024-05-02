@@ -55,7 +55,7 @@ async def get_day_review(
         raise HTTPException(status_code=404, detail="no data available.")
     await redis_connection.setex(
         name=_key,
-        time=3600,
+        time=900,
         value=orjson.dumps(_data, option=orjson.OPT_SERIALIZE_NUMPY),
     )
     return ORJSONResponse(_data)
