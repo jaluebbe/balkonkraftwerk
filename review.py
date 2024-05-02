@@ -3,7 +3,7 @@ import pandas as pd
 import arrow
 from config import max_inverter_limit, battery_inverter_serials
 
-max_battery_inverter_power = max_inverter_limit * len(battery_inverter_serials)
+max_battery_inverter_power = max_inverter_limit
 
 
 def _energy_power(power: pd.Series, utc: pd.Series) -> float:
