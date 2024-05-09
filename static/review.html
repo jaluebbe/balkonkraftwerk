@@ -56,17 +56,8 @@
             <tr>
                 <td>Missing</td>
                 <td><span id="energyMissing"></span>&nbsp;kWh</td>
-                <td>Unused</td>
-                <td><span id="energyUnused"></span>&nbsp;kWh</td>
-            </tr>
-            <tr class="batteryAvailable" style="display: none;">
-                <th colspan="4">Battery</th>
-            </tr>
-            <tr class="batteryAvailable" style="display: none;">
-                <td>Produced</td>
+                <td>From battery</td>
                 <td><span id="energyBattery"></span>&nbsp;kWh</td>
-                <td>Unreachable</td>
-                <td><span id="energyUnreachable"></span>&nbsp;kWh</td>
             </tr>
             <tr class="meterAvailable" style="display: none;">
                 <th colspan="4">Electricity meter</th>
@@ -201,15 +192,8 @@
         function refreshTable(data) {
             energyConsumed.innerHTML = parseFloat(data.consumer_energy).toFixed(2);
             energyProduced.innerHTML = parseFloat(data.producer_energy).toFixed(2);
-            energyUnused.innerHTML = parseFloat(data.unused_energy).toFixed(2);
             energyMissing.innerHTML = parseFloat(data.missing_energy).toFixed(2);
-            if (data.battery_energy == null) {
-                toggle_by_class("batteryAvailable", false);
-            } else {
-                toggle_by_class("batteryAvailable", true);
-                energyBattery.innerHTML = parseFloat(data.battery_energy ?? 0).toFixed(2);
-                energyUnreachable.innerHTML = parseFloat(data.battery_unreachable_energy).toFixed(2);
-            }
+            energyBattery.innerHTML = parseFloat(data.battery_energy ?? 0).toFixed(2);
             if (data.meter_consumption_day == null) {
                 toggle_by_class("meterAvailable", false);
             } else {
