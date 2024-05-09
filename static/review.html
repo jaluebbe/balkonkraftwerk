@@ -68,6 +68,15 @@
                 <td>Unreachable</td>
                 <td><span id="energyUnreachable"></span>&nbsp;kWh</td>
             </tr>
+            <tr class="meterAvailable" style="display: none;">
+                <th colspan="4">Electricity meter</th>
+            </tr>
+            <tr class="meterAvailable" style="display: none;">
+                <td>Consumed</td>
+                <td><span id="energyMeterConsumed"></span>&nbsp;kWh</td>
+                <td>Produced</td>
+                <td><span id="energyMeterProduced"></span>&nbsp;kWh</td>
+            </tr>
         </table>
         <p><a href="index.html">live data</a></p>
     </div>
@@ -196,11 +205,18 @@
             energyMissing.innerHTML = parseFloat(data.missing_energy).toFixed(2);
             if (data.battery_energy == null) {
                 toggle_by_class("batteryAvailable", false);
-                return
+            } else {
+                toggle_by_class("batteryAvailable", true);
+                energyBattery.innerHTML = parseFloat(data.battery_energy ?? 0).toFixed(2);
+                energyUnreachable.innerHTML = parseFloat(data.battery_unreachable_energy).toFixed(2);
             }
-            toggle_by_class("batteryAvailable", true);
-            energyBattery.innerHTML = parseFloat(data.battery_energy ?? 0).toFixed(2);
-            energyUnreachable.innerHTML = parseFloat(data.battery_unreachable_energy).toFixed(2);
+            if (data.meter_consumption_day == null) {
+                toggle_by_class("meterAvailable", false);
+            } else {
+                toggle_by_class("meterAvailable", true);
+                energyMeterProduced.innerHTML = parseFloat(data.meter_production_day).toFixed(2);
+                energyMeterConsumed.innerHTML = parseFloat(data.meter_consumption_day).toFixed(2);
+            }
         }
 
         function loadData() {
