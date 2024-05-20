@@ -9,7 +9,7 @@ def process_producers(report: dict) -> None:
         if _producer.get("type") == "mystrom":
             _data = mystrom_switch.read_switch(_producer["host"])
         elif _producer.get("type") == "shelly":
-            _data = shelly_devices.read_devices(
+            _data = shelly_devices.read_device(
                 _producer["host"], _producer["generation"]
             )
         else:
@@ -19,8 +19,6 @@ def process_producers(report: dict) -> None:
             if _power == 0:
                 continue
             report["producer_power"] += _power
-            report["producers"].append(
-                {"id": _producer["host"], "power": _power}
-            )
+            report["producers"].append(_data)
         else:
             print(f"Readout of {_producer} failed.")

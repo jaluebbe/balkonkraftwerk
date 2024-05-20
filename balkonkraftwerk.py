@@ -6,7 +6,7 @@ import redis
 import numpy as np
 import open_dtu
 import mystrom_switch
-from consumers import process_consumers
+from consumers import process_consumers, enable_consumer, disable_consumer
 from producers import process_producers
 from inverters import process_inverters_readout, process_inverter_limit
 from newmove_one import read_newmove_one
@@ -25,6 +25,7 @@ while True:
         "min_power": min_power,
         "consumers": [],
         "producers": [],
+        "optional_consumers": [],
         "scheduled_consumers": [],
         "producer_inverters": [],
         "consumer_power": min_power,
@@ -44,6 +45,18 @@ while True:
         _required_limit += max(
             0, _report["unknown_consumers_power"] - unknown_consumers_offset
         )
+    for _consumer in _report["optional_consumers"]:
+        if _required_limit > 0:
+            if _consumer["power"] > 0:
+                disable_consumer(_consumer)
+                _required_limit -= _consumer["power"]
+        else:
+            if (
+                _consumer["power"] == 0
+                and _required_limit + _consumer["nominal_power"] < 0
+            ):
+                enable_consumer(_consumer)
+                _required_limit += _consumer["nominal_power"]
     if _report.get("battery_power") is not None:
         _report["required"] = round(
             _required_limit - _report["battery_power"], 1

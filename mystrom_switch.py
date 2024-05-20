@@ -3,8 +3,7 @@ import logging
 import requests
 
 
-def read_switch(host: str) -> dict | None:
-    url = f"http://{host}/report"
+def _perform_request(url) -> dict | None:
     try:
         response = requests.get(url, timeout=1.1)
     except requests.exceptions.ConnectTimeout:
@@ -18,3 +17,21 @@ def read_switch(host: str) -> dict | None:
         return
     if response.status_code == 200:
         return response.json()
+
+
+def read_switch(host: str) -> dict | None:
+    url = f"http://{host}/report"
+    result = _perform_request(url)
+    if result is not None:
+        result["id"] = host
+        return result
+
+
+def enable_switch(host: str) -> dict | None:
+    url = f"http://{host}/relay?state=1"
+    return _perform_request(url)
+
+
+def disable_switch(host: str) -> dict | None:
+    url = f"http://{host}/relay?state=1"
+    return _perform_request(url)
