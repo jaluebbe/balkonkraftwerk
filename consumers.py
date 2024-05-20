@@ -64,7 +64,7 @@ def process_consumers(report: dict) -> None:
 def enable_consumer(consumer: dict) -> dict | None:
     if consumer.get("type") == "mystrom":
         return mystrom_switch.enable_switch(consumer["host"])
-    elif _consumer.get("type") == "shelly":
+    elif consumer.get("type") == "shelly":
         return shelly_devices.enable_device(
             consumer["host"], consumer["generation"]
         )
