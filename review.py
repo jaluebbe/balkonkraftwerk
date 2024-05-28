@@ -18,7 +18,9 @@ def _plot_list(power: pd.Series) -> dict[str, list]:
 def create_day_review(df: pd.DataFrame) -> dict:
     df.set_index("utc", inplace=True)
     response = {"type": "review", "success": True}
-    response["consumer_power"] = _plot_list(df["consumer_power"])
+    response["consumer_power"] = _plot_list(
+        df["consumer_power"] + df["unknown_consumers_power"].clip(lower=0)
+    )
     response["producer_power"] = _plot_list(df["producer_power"])
     response["consumer_energy"] = _energy_power(df["consumer_power"], df.index)
     response["producer_energy"] = _energy_power(df["producer_power"], df.index)
