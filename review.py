@@ -18,11 +18,12 @@ def _plot_list(power: pd.Series) -> dict[str, list]:
 def create_day_review(df: pd.DataFrame) -> dict:
     df.set_index("utc", inplace=True)
     response = {"type": "review", "success": True}
-    response["consumer_power"] = _plot_list(
-        df["consumer_power"] + df["unknown_consumers_power"].clip(lower=0)
+    consumer_power = df["consumer_power"] + df["unknown_consumers_power"].clip(
+        lower=0
     )
+    response["consumer_power"] = _plot_list(consumer_power)
     response["producer_power"] = _plot_list(df["producer_power"])
-    response["consumer_energy"] = _energy_power(df["consumer_power"], df.index)
+    response["consumer_energy"] = _energy_power(consumer_power, df.index)
     response["producer_energy"] = _energy_power(df["producer_power"], df.index)
     if "battery_power" in df.columns:
         response["battery_power"] = _plot_list(df["battery_power"])
@@ -34,16 +35,14 @@ def create_day_review(df: pd.DataFrame) -> dict:
         )
         response["missing_energy"] = _energy_power(
             np.maximum(
-                df["consumer_power"]
-                - df["producer_power"]
-                - df["battery_power"],
+                consumer_power - df["producer_power"] - df["battery_power"],
                 0,
             ),
             df.index,
         )
     else:
         response["missing_energy"] = _energy_power(
-            np.maximum(df["consumer_power"] - df["producer_power"], 0), df.index
+            np.maximum(consumer_power - df["producer_power"], 0), df.index
         )
         response["plot_limit"] = float(max(200, df["producer_power"].max()))
     if "meter_consumed" in df.columns:
