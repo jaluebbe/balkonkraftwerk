@@ -166,7 +166,8 @@
             } else {
                 toggle_by_class("extendedMeterData", false);
             }
-            if (message.accumulatedConsumption != null &&
+            if (message.accumulatedConsumption == null ||
+                message.accumulatedConsumption != null &&
                 message.accumulatedProduction != null &&
                 message.accumulatedConsumption + message.accumulatedProduction > 0
             ) {
