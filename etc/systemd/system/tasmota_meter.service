@@ -1,0 +1,13 @@
+[Unit]
+Description=Tasmota meter
+After=redis-server.service
+
+[Service]
+Type=simple
+User=balkonkraftwerk
+WorkingDirectory=/home/balkonkraftwerk/balkonkraftwerk
+ExecStart=/home/balkonkraftwerk/balkonkraftwerk/tasmota_meter.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
