@@ -47,6 +47,18 @@
             <td><span id="meterProductionPower"></span>&nbsp;W</td>
             <td class="meterConsumptionAvailable"><span id="meterProduction"></span>&nbsp;kWh</td>
         </tr>
+        <tr class="phasePowerData" style="display: none;">
+            <td colspan="2">L1</td>
+            <td><span id="powerL1"></span>&nbsp;W</td>
+        </tr>
+        <tr class="phasePowerData" style="display: none;">
+            <td colspan="2">L2</td>
+            <td><span id="powerL2"></span>&nbsp;W</td>
+        </tr>
+        <tr class="phasePowerData" style="display: none;">
+            <td colspan="2">L3</td>
+            <td><span id="powerL3"></span>&nbsp;W</td>
+        </tr>
         <tr class="extendedMeterData" style="display: none;">
             <td>L1</td>
             <td><span id="voltageL1"></span>&nbsp;V</td>
@@ -177,6 +189,14 @@
                 toggle_by_class("extendedMeterData", true);
             } else {
                 toggle_by_class("extendedMeterData", false);
+            }
+            if (message.powerL1 != null) {
+                powerL1.innerHTML = parseFloat(message.powerL1).toFixed(1);
+                powerL2.innerHTML = parseFloat(message.powerL2).toFixed(1);
+                powerL3.innerHTML = parseFloat(message.powerL3).toFixed(1);
+                toggle_by_class("phasePowerData", true);
+            } else {
+                toggle_by_class("phasePowerData", false);
             }
             if (message.accumulatedConsumption == null ||
                 message.accumulatedConsumption != null &&
