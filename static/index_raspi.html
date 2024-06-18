@@ -232,7 +232,7 @@
             ws.onmessage = function(event) {
                 connection_status.innerHTML = "Connected";
                 let message = JSON.parse(event.data);
-                if (message.type == "tibber_pulse") {
+                if (message.type == "electricity_meter") {
                     processMeterMessage(message);
                 } else {
                     processMessage(message);

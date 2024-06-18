@@ -51,8 +51,8 @@ async def redis_handler(websocket: WebSocket, email: str):
     ):
         async for message in websocket.iter_bytes():
             data = orjson.loads(message)
-            if data.get("type") == "tibber_pulse":
-                channel = f"tibber_pulse:{email}"
+            if data.get("type") == "electricity_meter":
+                channel = f"electricity_meter:{email}"
             elif data.get("type") == "review":
                 channel = f"power_review:{email}"
             else:

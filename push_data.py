@@ -21,7 +21,7 @@ log_directory = Path("../logs_json")
 async def push_data(target_uri: str):
     redis_connection = aioredis.Redis(host=redis_host)
     pubsub = redis_connection.pubsub(ignore_subscribe_messages=True)
-    await pubsub.subscribe("balkonkraftwerk", "tibber_pulse")
+    await pubsub.subscribe("balkonkraftwerk", "electricity_meter")
     async with websockets.connect(target_uri) as target_websocket:
         async for message in pubsub.listen():
             await target_websocket.send(message["data"])

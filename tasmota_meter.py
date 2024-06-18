@@ -39,7 +39,7 @@ if __name__ == "__main__":
             continue
         _data = _response["StatusSNS"]
         _data["utc"] = int(_t_start)
-        _data["type"] = "tasmota_meter"
+        _data["type"] = "electricity_meter"
         _data["lastMeterConsumption"] = _data["SML"]["1_8_0"]
         _data["lastMeterProduction"] = _data["SML"]["2_8_0"]
         _data["power"] = max(_data["SML"]["16_7_0"], 0)
@@ -49,9 +49,9 @@ if __name__ == "__main__":
         _data["powerL3"] = _data["SML"]["76_7_0"]
         if old_time != _data["Time"]:
             _json_report = orjson.dumps(_data)
-            redis_connection.lpush("tibber_pulse", _json_report)
-            redis_connection.ltrim("tibber_pulse", 0, 30)
-            redis_connection.publish("tibber_pulse", _json_report)
+            redis_connection.lpush("electricity_meter", _json_report)
+            redis_connection.ltrim("electricity_meter", 0, 30)
+            redis_connection.publish("electricity_meter", _json_report)
             old_time = _data["Time"]
         _dt = time.time() - _t_start
         time.sleep(max(0, interval - _dt))

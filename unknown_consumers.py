@@ -9,7 +9,7 @@ redis_connection = redis.Redis(decode_responses=True)
 def collect_meter_power(utc_start: int):
     _meter_data = [
         json.loads(_row)
-        for _row in redis_connection.lrange("tibber_pulse", 0, -1)[::-1]
+        for _row in redis_connection.lrange("electricity_meter", 0, -1)[::-1]
     ]
     return [
         _row["power"] - _row["powerProduction"]
@@ -24,7 +24,7 @@ def process_unknown_consumers(report: dict) -> None:
     )
     if len(_recent_meter_power) > 0:
         _meter_data = json.loads(
-            redis_connection.lrange("tibber_pulse", 0, 0)[0]
+            redis_connection.lrange("electricity_meter", 0, 0)[0]
         )
         report["meter_consumed"] = _meter_data["lastMeterConsumption"]
         report["meter_produced"] = _meter_data["lastMeterProduction"]
