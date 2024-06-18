@@ -15,7 +15,7 @@ else:
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket, channel: str | None = None):
     user = websocket.session.get("user")
-    supported_channels = ["balkonkraftwerk", "tibber_pulse"]
+    supported_channels = ["balkonkraftwerk", "electricity_meter"]
     await websocket.accept()
     if not user:
         await websocket.close(
