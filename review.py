@@ -35,7 +35,9 @@ def create_day_review(df: pd.DataFrame) -> dict:
         )
         response["missing_energy"] = _energy_power(
             np.maximum(
-                consumer_power - df["producer_power"] - df["battery_power"],
+                consumer_power
+                - df["producer_power"]
+                - df["battery_power"].fillna(0),
                 0,
             ),
             df.index,
