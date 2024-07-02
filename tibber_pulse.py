@@ -6,8 +6,17 @@ import tibber
 from config import tibber_api_key
 
 account = tibber.Account(tibber_api_key)
-home = account.homes[0]
+homes = [
+    _home
+    for _home in account.homes
+    if _home.features.real_time_consumption_enabled
+]
 redis_connection = aioredis.Redis()
+
+if len(homes) > 0:
+    home = homes[0]
+else:
+    exit(0)
 
 
 @home.event("live_measurement")
