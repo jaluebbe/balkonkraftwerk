@@ -39,12 +39,20 @@ def process_inverter_limit(report: dict, required_limit: float) -> None:
         _inverter["dc_voltage"] + _inverter["dc_current"] * battery_resistance
     )
     if (
+        battery_full_voltage is not None
+        and _battery_voltage > battery_full_voltage
+    ):
+        _new_inverter_limit = max_inverter_limit
+    elif (
         required_limit < 0
         and not _inverter["enabled"]
         or required_limit < inverter_shutdown_value
     ):
         _new_inverter_limit = 0
-    elif _battery_voltage < battery_off_voltage:
+    elif (
+        battery_off_voltage is not None
+        and _battery_voltage < battery_off_voltage
+    ):
         _new_inverter_limit = 0
     else:
         _new_inverter_limit = max(
@@ -57,7 +65,11 @@ def process_inverter_limit(report: dict, required_limit: float) -> None:
             password=open_dtu_password,
             serial=battery_inverter_serial,
         )
-    elif not _inverter["enabled"] and _battery_voltage < battery_on_voltage:
+    elif (
+        battery_on_voltage is not None
+        and not _inverter["enabled"]
+        and _battery_voltage < battery_on_voltage
+    ):
         return
     elif not _inverter["enabled"] and _new_inverter_limit > 0:
         open_dtu.enable_inverter(
@@ -65,6 +77,9 @@ def process_inverter_limit(report: dict, required_limit: float) -> None:
             password=open_dtu_password,
             serial=battery_inverter_serial,
         )
+    _new_inverter_limit = min(
+        _new_inverter_limit, max_system_power - report["producer_power"]
+    )
     _response = open_dtu.set_inverter_limit(
         host=open_dtu_host,
         password=open_dtu_password,
@@ -73,5 +88,4 @@ def process_inverter_limit(report: dict, required_limit: float) -> None:
     )
     if _response is None:
         print(f"Problem setting the inverter limit of {_new_inverter_limit}W.")
-    required_limit -= _new_inverter_limit
     _inverter["new_inverter_limit"] = round(_new_inverter_limit, 0)

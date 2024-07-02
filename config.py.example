@@ -1,9 +1,11 @@
 min_power = 35
 min_inverter_limit = 18
 max_inverter_limit = 180
+max_system_power = 600
 battery_resistance = 0.1
 battery_off_voltage = 24
 battery_on_voltage = 25.6
+battery_full_voltage = None
 inverter_shutdown_value = -50
 open_dtu_host = "open-dtu"
 open_dtu_password = "openDTU42"
