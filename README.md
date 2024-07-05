@@ -10,6 +10,8 @@ Depending on the type of your Raspberry Pi your may either the 32bit or the 64bi
 Using the imager for the SD card you could already set up your WiFi credentials, username, hostname and SSH access.
 You are free to choose your username except for the name "balkonkraftwerk" which will be generated later.
 In the following we assume "pi" as username.
+You should check your swap settings in /etc/dphys-swapfile .
+If it is too low e.g. 100MB, the Raspberry Pi may freeze during operation and especially during system updates.
 
 ### Installation with sudo privileges
 These steps are performed under your username with sudo privileges:
