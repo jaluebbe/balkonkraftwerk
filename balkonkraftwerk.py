@@ -1,5 +1,6 @@
 #!venv/bin/python3
 import time
+import logging
 import orjson
 import socket
 import redis
@@ -74,11 +75,11 @@ while True:
             _report[_key] = round(_report[_key], 1)
     _key = "power:{}:{}".format(hostname, time.strftime("%Y%m%d"))
     if tibber_api_key is not None:
-        _price = tp.get_price()
-        if len(_price) > 0:
-            _report["tibber_price"] = _price
+        tp.process_report(_report)
     _json_report = orjson.dumps(_report, option=orjson.OPT_SERIALIZE_NUMPY)
     redis_connection.set("required_power", _report["required"])
     redis_connection.lpush(_key, _json_report)
     redis_connection.publish("balkonkraftwerk", _json_report)
+    if tp.account is None:
+        tp.setup()
     time.sleep(interval)
