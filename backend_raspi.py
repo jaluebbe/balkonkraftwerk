@@ -12,6 +12,7 @@ from redis import asyncio as aioredis
 import routers_raspi.datasets as datasets
 import routers_raspi.review as review
 import routers_raspi.meters as meters
+import routers_raspi.github_auth as github_auth
 
 hostname = socket.gethostname()
 if "REDIS_HOST" in os.environ:
@@ -30,6 +31,7 @@ app.mount("/archive", StaticFiles(directory=log_directory), name="archive")
 app.include_router(datasets.router)
 app.include_router(review.router)
 app.include_router(meters.router)
+app.include_router(github_auth.router)
 
 
 @app.get("/", include_in_schema=False)
