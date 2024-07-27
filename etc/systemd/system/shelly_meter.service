@@ -1,0 +1,14 @@
+[Unit]
+Description=Shelly meter
+After=redis-server.service
+
+[Service]
+Type=simple
+User=balkonkraftwerk
+WorkingDirectory=/home/balkonkraftwerk/balkonkraftwerk
+ExecStart=/home/balkonkraftwerk/balkonkraftwerk/shelly_meter.py
+RestartSec=30
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

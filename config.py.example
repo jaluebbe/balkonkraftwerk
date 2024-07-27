@@ -9,6 +9,8 @@ battery_full_voltage = None
 inverter_shutdown_value = -50
 open_dtu_host = "open-dtu"
 open_dtu_password = "openDTU42"
+tasmota_meter_host = None
+shelly_3em_host = None
 consumers = [
     {"host": "192.168.1.100", "name": "fridge", "type": "mystrom"},
     {"host": "192.168.1.101", "name": "TV", "type": "shelly", "generation": 1},

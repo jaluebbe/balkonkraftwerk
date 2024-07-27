@@ -19,6 +19,16 @@ def _perform_request(url) -> dict | None:
         return response.json()
 
 
+def _filter_emeter(data: dict) -> dict | None:
+    if not data["is_valid"]:
+        return
+    return {
+        _key: _value
+        for _key, _value in data.items()
+        if _key in ("power", "current", "voltage")
+    }
+
+
 def read_device(host: str, generation: int = 1) -> dict | None:
     if generation == 1:
         url = f"http://{host}/status"
@@ -39,8 +49,15 @@ def read_device(host: str, generation: int = 1) -> dict | None:
         else:
             data = {
                 "id": host,
-                "power": response["meters"][0]["power"],
+                "utc": response["unixtime"],
             }
+            if response.get("meters") is not None:
+                data["power"] = response["meters"][0]["power"]
+            elif response.get("emeters") is not None:
+                data["power"] = response["total_power"]
+                data["L1"] = _filter_emeter(response["emeters"][0])
+                data["L2"] = _filter_emeter(response["emeters"][1])
+                data["L3"] = _filter_emeter(response["emeters"][2])
             if response.get("relays") is not None:
                 data["relay"] = response["relays"][0]["ison"]
             if response.get("temperature") is not None:
