@@ -11,8 +11,8 @@ else:
 
 
 @router.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket, channel: str|None=None):
-    supported_channels = ["balkonkraftwerk", "electricity_meter"]
+async def websocket_endpoint(websocket: WebSocket, channel: str | None = None):
+    supported_channels = ["balkonkraftwerk", "electricity_meter", "smart_meter"]
     await websocket.accept()
     if channel is not None and channel not in supported_channels:
         await websocket.close(code=status.WS_1003_UNSUPPORTED_DATA)

@@ -30,68 +30,59 @@
     <div style="text-align: center;"><canvas id="canvas-preview" width="380" height="230"></canvas></div>
     <table style="width:100%;">
         <tr>
-            <th colspan="3">Electricity meter</th>
+            <th colspan="4">Electricity meter</th>
         </tr>
         <tr class="priceData" style="display: none;">
-             <td>Price</td>
+             <td colspan="2">Price</td>
              <td><span id="priceLevel"></span></td>
              <td><span id="priceTotal"></span>&nbsp;<span id="priceCurrency"></span></td>
         </tr>
         <tr>
-            <td style="width: 40%">Consumption</td>
+            <td style="width: 40%" colspan="2">Consumption</td>
             <td style="width: 30%"><span id="meterConsumptionPower"></span>&nbsp;W</td>
             <td style="width: 30%" class="meterConsumptionAvailable"><span id="meterConsumption"></span>&nbsp;kWh</td>
         </tr>
         <tr>
-            <td>Production</td>
+            <td colspan="2">Production</td>
             <td><span id="meterProductionPower"></span>&nbsp;W</td>
             <td class="meterConsumptionAvailable"><span id="meterProduction"></span>&nbsp;kWh</td>
         </tr>
-        <tr class="phasePowerData" style="display: none;">
-            <td colspan="2">L1</td>
-            <td><span id="powerL1"></span>&nbsp;W</td>
+        <tr class="singlePhaseData" style="display: none;">
+            <td class="phaseLabel">L1</td>
+            <td class="voltageLabel"><span id="voltageL1"></span>&nbsp;V</td>
+            <td class="currentLabel"><span id="currentL1"></span>&nbsp;A</td>
+            <td class="powerLabel"><span id="powerL1"></span>&nbsp;W</td>
         </tr>
-        <tr class="phasePowerData" style="display: none;">
-            <td colspan="2">L2</td>
-            <td><span id="powerL2"></span>&nbsp;W</td>
+        <tr class="singlePhaseData" style="display: none;">
+            <td class="phaseLabel">L2</td>
+            <td class="voltageLabel"><span id="voltageL2"></span>&nbsp;V</td>
+            <td class="currentLabel"><span id="currentL2"></span>&nbsp;A</td>
+            <td class="powerLabel"><span id="powerL2"></span>&nbsp;W</td>
         </tr>
-        <tr class="phasePowerData" style="display: none;">
-            <td colspan="2">L3</td>
-            <td><span id="powerL3"></span>&nbsp;W</td>
-        </tr>
-        <tr class="extendedMeterData" style="display: none;">
-            <td>L1</td>
-            <td><span id="voltageL1"></span>&nbsp;V</td>
-            <td><span id="currentL1"></span>&nbsp;A</td>
-        </tr>
-        <tr class="extendedMeterData" style="display: none;">
-            <td>L2</td>
-            <td><span id="voltageL2"></span>&nbsp;V</td>
-            <td><span id="currentL2"></span>&nbsp;A</td>
-        </tr>
-        <tr class="extendedMeterData" style="display: none;">
-            <td>L3</td>
-            <td><span id="voltageL3"></span>&nbsp;V</td>
-            <td><span id="currentL3"></span>&nbsp;A</td>
+        <tr class="singlePhaseData" style="display: none;">
+            <td class="phaseLabel">L3</td>
+            <td class="voltageLabel"><span id="voltageL3"></span>&nbsp;V</td>
+            <td class="currentLabel"><span id="currentL3"></span>&nbsp;A</td>
+            <td class="powerLabel"><span id="powerL3"></span>&nbsp;W</td>
         </tr>
         <tr>
-            <th colspan="3">Balcony power plant</th>
+            <th colspan="4">Balcony power plant</th>
         </tr>
         <tr>
-            <td colspan="2">Solar power</td>
+            <td colspan="3">Solar power</td>
             <td><span id="producerPower"></span>&nbsp;W</td>
         </tr>
         <tr class="batteryData" style="display: none;">
-            <td>From battery</td>
+            <td colspan="2">From battery</td>
             <td><span id="batteryVoltage"></span>&nbsp;V</td>
             <td><span id="batteryPower"></span>&nbsp;W</td>
         </tr>
         <tr>
-            <td colspan="2">Known consumers</td>
+            <td colspan="3">Known consumers</td>
             <td><span id="consumerPower"></span>&nbsp;W</td>
         </tr>
         <tr class="unknownData" style="display: none;">
-            <td colspan="2">Unknown consumers</td>
+            <td colspan="3">Unknown consumers</td>
             <td><span id="unknownConsumersPower"></span>&nbsp;W</td>
         </tr>
     </table>
@@ -115,6 +106,13 @@
             var lst = document.getElementsByClassName(cls);
             for(var i = 0; i < lst.length; ++i) {
                 lst[i].style.display = on ? '' : 'none';
+            }
+        }
+
+        function colspan_by_class(cls, colSpan) {
+            var lst = document.getElementsByClassName(cls);
+            for(var i = 0; i < lst.length; ++i) {
+                lst[i].colSpan = colSpan;
             }
         }
 
@@ -162,30 +160,9 @@
         gauge.setMinValue(-200);
         gauge.set(0);
         var lastMessageUtc = undefined;
+        var lastSmartMeterUtc = undefined;
 
-        function processMeterMessage(message) {
-            let consumptionPower = parseFloat(message.power)
-            let productionPower = parseFloat(message.powerProduction)
-            gauge.set(consumptionPower - productionPower);
-            if (message.voltagePhase1 != null) {
-                voltageL1.innerHTML = parseFloat(message.voltagePhase1).toFixed(1);
-                voltageL2.innerHTML = parseFloat(message.voltagePhase2).toFixed(1);
-                voltageL3.innerHTML = parseFloat(message.voltagePhase3).toFixed(1);
-                currentL1.innerHTML = parseFloat(message.currentL1).toFixed(2);
-                currentL2.innerHTML = parseFloat(message.currentL2).toFixed(2);
-                currentL3.innerHTML = parseFloat(message.currentL3).toFixed(2);
-                toggle_by_class("extendedMeterData", true);
-            } else {
-                toggle_by_class("extendedMeterData", false);
-            }
-            if (message.powerL1 != null) {
-                powerL1.innerHTML = parseFloat(message.powerL1).toFixed(1);
-                powerL2.innerHTML = parseFloat(message.powerL2).toFixed(1);
-                powerL3.innerHTML = parseFloat(message.powerL3).toFixed(1);
-                toggle_by_class("phasePowerData", true);
-            } else {
-                toggle_by_class("phasePowerData", false);
-            }
+        function processMeterConsumption(message) {
             if (message.accumulatedConsumption == null ||
                 message.accumulatedConsumption != null &&
                 message.accumulatedProduction != null &&
@@ -197,6 +174,47 @@
             } else {
                 toggle_by_class("meterConsumptionAvailable", false);
             }
+        }
+
+        function processMeterPower(message) {
+            let consumptionPower = parseFloat(message.power)
+            let productionPower = parseFloat(message.powerProduction)
+            gauge.set(consumptionPower - productionPower);
+            let extendedDataAvailable = false;
+            let phaseColSpan = 4;
+            if (message.voltagePhase1 != null) {
+                voltageL1.innerHTML = parseFloat(message.voltagePhase1).toFixed(1);
+                voltageL2.innerHTML = parseFloat(message.voltagePhase2).toFixed(1);
+                voltageL3.innerHTML = parseFloat(message.voltagePhase3).toFixed(1);
+                extendedDataAvailable = true;
+                phaseColSpan -= 1;
+                toggle_by_class("voltageLabel", true);
+            } else {
+                toggle_by_class("voltageLabel", false);
+            }
+            if (message.currentL1 != null) {
+                currentL1.innerHTML = parseFloat(message.currentL1).toFixed(2);
+                currentL2.innerHTML = parseFloat(message.currentL2).toFixed(2);
+                currentL3.innerHTML = parseFloat(message.currentL3).toFixed(2);
+                extendedDataAvailable = true;
+                phaseColSpan -= 1;
+                toggle_by_class("currentLabel", true);
+            } else {
+                toggle_by_class("currentLabel", false);
+            }
+            if (message.powerL1 != null) {
+                powerL1.innerHTML = parseFloat(message.powerL1).toFixed(1);
+                powerL2.innerHTML = parseFloat(message.powerL2).toFixed(1);
+                powerL3.innerHTML = parseFloat(message.powerL3).toFixed(1);
+                extendedDataAvailable = true;
+                phaseColSpan -= 1;
+                toggle_by_class("powerLabel", true);
+            } else {
+                toggle_by_class("powerLabel", false);
+            }
+            toggle_by_class("singlePhaseData", extendedDataAvailable);
+            if (phaseColSpan < 4)
+                colspan_by_class("phaseLabel", phaseColSpan);
             meterConsumptionPower.innerHTML = consumptionPower;
             meterProductionPower.innerHTML = productionPower;
         }
@@ -230,10 +248,16 @@
         function connect() {
             ws = new WebSocket(ws_protocol + "//" + window.location.host + "/ws");
             ws.onmessage = function(event) {
+                const utcNow = Date.now() / 1e3;
                 connection_status.innerHTML = "Connected";
                 let message = JSON.parse(event.data);
                 if (message.type == "electricity_meter") {
-                    processMeterMessage(message);
+                    processMeterConsumption(message)
+                    if (lastSmartMeterUtc == null || utcNow - lastSmartMeterUtc > 30)
+                        processMeterPower(message);
+                } else if (message.type == "smart_meter") {
+                    lastSmartMeterUtc = message.utc;
+                    processMeterPower(message);
                 } else {
                     processMessage(message);
                 }
