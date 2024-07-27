@@ -54,7 +54,7 @@ def perform_inverter_request(host: str, serial: str | None = None) -> dict:
         return {
             _inverter["serial"]: _inverter
             for _inverter in inverters
-            if _inverter["reachable"]
+            if _inverter["reachable"] and _inverter["data_age"] < 60
         }
 
 
