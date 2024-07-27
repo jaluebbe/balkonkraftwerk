@@ -39,7 +39,8 @@ def process_consumers(report: dict) -> None:
             _power = _data["power"]
             if _power == 0:
                 continue
-            report["consumer_power"] += _power
+            if not _consumer.get("ignore") == True:
+                report["consumer_power"] += _power
             report["consumers"].append(_data)
         else:
             print(f"Readout of {_consumer} failed.")
@@ -54,7 +55,8 @@ def process_consumers(report: dict) -> None:
             continue
         if _data is not None:
             _power = _data["power"]
-            report["consumer_power"] += _power
+            if not _consumer.get("ignore") == True:
+                report["consumer_power"] += _power
             _data.update(_consumer)
             report["optional_consumers"].append(_data)
         else:
