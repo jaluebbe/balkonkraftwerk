@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import arrow
-from config import max_inverter_limit, battery_inverter_serials
+from config import max_inverter_limit
 
 max_battery_inverter_power = max_inverter_limit
 
