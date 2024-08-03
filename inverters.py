@@ -1,5 +1,15 @@
 import open_dtu
-from config import *
+from battery import get_battery_status
+from config import (
+    open_dtu_host,
+    open_dtu_password,
+    max_system_power,
+    inverter_shutdown_value,
+    max_inverter_limit,
+    min_inverter_limit,
+    battery_inverter_serial,
+    producer_inverter_serials,
+)
 
 
 def process_inverters_readout(report: dict) -> None:
@@ -35,24 +45,20 @@ def process_inverters_readout(report: dict) -> None:
 
 def process_inverter_limit(report: dict, required_limit: float) -> None:
     _inverter = report["battery_inverter"]
-    _battery_voltage = (
-        _inverter["dc_voltage"] + _inverter["dc_current"] * battery_resistance
-    )
-    if (
-        battery_full_voltage is not None
-        and _battery_voltage > battery_full_voltage
-    ):
-        _new_inverter_limit = max_inverter_limit
+    _battery = get_battery_status(report)
+    if _battery and _battery["full"]:
+        _new_inverter_limit = min(
+            max_inverter_limit,
+            max(min_inverter_limit, _battery["charger_power"], required_limit),
+        )
     elif (
         required_limit < 0
         and not _inverter["enabled"]
         or required_limit < inverter_shutdown_value
+        and (not _battery or not _battery["full"])
     ):
         _new_inverter_limit = 0
-    elif (
-        battery_off_voltage is not None
-        and _battery_voltage < battery_off_voltage
-    ):
+    elif _battery and _battery["low"]:
         _new_inverter_limit = 0
     else:
         _new_inverter_limit = max(
@@ -65,11 +71,7 @@ def process_inverter_limit(report: dict, required_limit: float) -> None:
             password=open_dtu_password,
             serial=battery_inverter_serial,
         )
-    elif (
-        battery_on_voltage is not None
-        and not _inverter["enabled"]
-        and _battery_voltage < battery_on_voltage
-    ):
+    elif not _inverter["enabled"] and _battery and not _battery["ok"]:
         return
     elif not _inverter["enabled"] and _new_inverter_limit > 0:
         open_dtu.enable_inverter(
