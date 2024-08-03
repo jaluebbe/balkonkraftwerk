@@ -4,7 +4,7 @@ import time
 from pathlib import Path
 import socket
 import uvicorn
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
 from redis import asyncio as aioredis

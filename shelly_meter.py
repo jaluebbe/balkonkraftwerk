@@ -1,6 +1,7 @@
 #!venv/bin/python3
 import time
 import orjson
+import redis
 from config import shelly_3em_host
 from shelly_devices import read_device
 

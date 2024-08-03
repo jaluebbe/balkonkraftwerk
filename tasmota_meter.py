@@ -5,7 +5,6 @@ import logging
 import orjson
 import requests
 import redis
-import arrow
 from config import tasmota_meter_host
 
 

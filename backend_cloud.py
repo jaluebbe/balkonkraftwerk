@@ -8,7 +8,6 @@ import uvicorn
 from fastapi import FastAPI, Request, WebSocket
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
-from fastapi import HTTPException
 from redis import asyncio as aioredis
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -92,7 +91,7 @@ async def validate_token(access_token: str) -> str:
             "https://api.github.com/user/emails", headers=headers
         )
     email = [
-        _item["email"] for _item in response.json() if _item["primary"] == True
+        _item["email"] for _item in response.json() if _item["primary"] is True
     ][0]
     return email
 
