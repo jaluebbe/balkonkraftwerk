@@ -1,7 +1,7 @@
 import json
 import redis
 import numpy as np
-from config import *
+from config import unknown_consumers_interval
 
 redis_connection = redis.Redis(decode_responses=True)
 

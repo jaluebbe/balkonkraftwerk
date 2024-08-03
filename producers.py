@@ -1,7 +1,7 @@
 import datetime
 import mystrom_switch
 import shelly_devices
-from config import *
+from config import producers
 
 
 def process_producers(report: dict) -> None:
