@@ -1,19 +1,22 @@
 #!venv/bin/python3
 import time
-import logging
 import orjson
 import socket
 import redis
-import numpy as np
-import open_dtu
-import mystrom_switch
-from consumers import process_consumers, enable_consumer, disable_consumer
+from consumers import process_consumers_readout, process_optional_consumers
 from producers import process_producers
 from inverters import process_inverters_readout, process_inverter_limit
 from newmove_one import read_newmove_one
 from unknown_consumers import process_unknown_consumers
 from tibber_price import tibber_price
-from config import *
+from config import (
+    tibber_api_key,
+    min_power,
+    newmove_one_host,
+    consider_unknown_consumers,
+    unknown_consumers_offset,
+    interval,
+)
 
 redis_connection = redis.Redis(decode_responses=True)
 hostname = socket.gethostname()
@@ -37,7 +40,7 @@ while True:
     # read out newmove one if available
     if newmove_one_host is not None:
         _report["newmove_one"] = read_newmove_one(newmove_one_host)
-    process_consumers(_report)
+    process_consumers_readout(_report)
     process_producers(_report)
     process_inverters_readout(_report)
     process_unknown_consumers(_report)
@@ -46,18 +49,7 @@ while True:
         _required_limit += max(
             0, _report["unknown_consumers_power"] - unknown_consumers_offset
         )
-    for _consumer in _report["optional_consumers"]:
-        if _required_limit > 0:
-            if _consumer["power"] > 0:
-                disable_consumer(_consumer)
-                _required_limit -= _consumer["power"]
-        else:
-            if (
-                _consumer["power"] == 0
-                and _required_limit + _consumer["nominal_power"] < 0
-            ):
-                enable_consumer(_consumer)
-                _required_limit += _consumer["nominal_power"]
+    _required_limit = process_optional_consumers(_report, _required_limit)
     if _report.get("battery_power") is not None:
         _report["required"] = round(
             _required_limit - _report["battery_power"], 1

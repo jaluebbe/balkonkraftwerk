@@ -1,10 +1,10 @@
 import datetime
 import mystrom_switch
 import shelly_devices
-from config import *
+from config import scheduled_consumers, consumers, optional_consumers
 
 
-def process_consumers(report: dict) -> None:
+def process_consumers_readout(report: dict) -> None:
     _today = datetime.datetime.today()
     _now = _today.strftime("%H:%M")
     _day_of_week = _today.strftime("%a")
@@ -39,7 +39,7 @@ def process_consumers(report: dict) -> None:
             _power = _data["power"]
             if _power == 0:
                 continue
-            if not _consumer.get("ignore") == True:
+            if not _consumer.get("ignore") is True:
                 report["consumer_power"] += _power
             report["consumers"].append(_data)
         else:
@@ -55,7 +55,7 @@ def process_consumers(report: dict) -> None:
             continue
         if _data is not None:
             _power = _data["power"]
-            if not _consumer.get("ignore") == True:
+            if not _consumer.get("ignore") is True:
                 report["consumer_power"] += _power
             _data.update(_consumer)
             report["optional_consumers"].append(_data)
@@ -79,3 +79,19 @@ def disable_consumer(consumer: dict) -> dict | None:
         return shelly_devices.disable_device(
             consumer["host"], consumer["generation"]
         )
+
+
+def process_optional_consumers(report: dict, required_limit: float) -> float:
+    for _consumer in report["optional_consumers"]:
+        if required_limit > 0:
+            if _consumer["power"] > 0:
+                disable_consumer(_consumer)
+                required_limit -= _consumer["power"]
+        else:
+            if (
+                _consumer["power"] == 0
+                and required_limit + _consumer["nominal_power"] < 0
+            ):
+                enable_consumer(_consumer)
+                required_limit += _consumer["nominal_power"]
+    return required_limit
