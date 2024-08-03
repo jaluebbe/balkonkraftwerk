@@ -73,8 +73,9 @@
             <td><span id="producerPower"></span>&nbsp;W</td>
         </tr>
         <tr class="batteryData" style="display: none;">
-            <td colspan="2">From battery</td>
+            <td>Battery</td>
             <td><span id="batteryVoltage"></span>&nbsp;V</td>
+            <td><span id="batteryCurrent"></span>&nbsp;A</td>
             <td><span id="batteryPower"></span>&nbsp;W</td>
         </tr>
         <tr>
@@ -244,6 +245,7 @@
             if (message.battery_inverter != undefined) {
                 batteryPower.innerHTML = message.battery_power;
                 batteryVoltage.innerHTML = message.battery_inverter.dc_voltage;
+                batteryCurrent.innerHTML = message.battery_inverter.dc_current;
                 toggle_by_class("batteryData", true);
             } else {
                 toggle_by_class("batteryData", false);
