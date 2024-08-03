@@ -1,16 +1,11 @@
+# balkonkraftwerk.py
+tibber_api_key = None
 min_power = 35
-min_inverter_limit = 18
-max_inverter_limit = 180
-max_system_power = 600
-battery_resistance = 0.1
-battery_off_voltage = 24
-battery_on_voltage = 25.6
-battery_full_voltage = None
-inverter_shutdown_value = -50
-open_dtu_host = "open-dtu"
-open_dtu_password = "openDTU42"
-tasmota_meter_host = None
-shelly_3em_host = None
+newmove_one_host = None
+consider_unknown_consumers = False
+unknown_consumers_offset = 0
+interval = 30
+# consumers.py
 consumers = [
     {"host": "192.168.1.100", "name": "fridge", "type": "mystrom"},
     {"host": "192.168.1.101", "name": "TV", "type": "shelly", "generation": 1},
@@ -26,14 +21,29 @@ scheduled_consumers = [
         "days": ["Sat", "Sun"],
     },
 ]
-consider_unknown_consumers = False
-unknown_consumers_offset = 0
-producers = [
-    {"host": "192.168.1.104", "name": "west balcony", "type": "shelly", "generation": 2},
-]
-producer_inverter_serials = []
-battery_inverter_serial = None
-newmove_one_host = None
-tibber_api_key = None
-interval = 30
+optional_consumers = []
+# unknown_consumers.py
 unknown_consumers_interval = 45
+# producers.py
+producers = [
+    {"host": "192.168.1.104", "name": "west balcony", "type": "shelly", "generation": 2}
+]
+# inverters.py
+open_dtu_host = "open-dtu"
+open_dtu_password = "openDTU42"
+max_system_power = 600
+inverter_shutdown_value = -50
+max_inverter_limit = 180
+min_inverter_limit = 18
+battery_inverter_serial = None
+producer_inverter_serials = []
+# battery.py
+charger_reference = {}
+battery_resistance = 0.1
+battery_full_voltage = None
+battery_on_voltage = 25.6
+battery_off_voltage = 24
+# shelly_meter.py
+shelly_3em_host = None
+# tasmota_meter.py
+tasmota_meter_host = None
