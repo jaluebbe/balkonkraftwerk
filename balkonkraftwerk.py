@@ -72,6 +72,6 @@ while True:
     redis_connection.set("required_power", _report["required"])
     redis_connection.lpush(_key, _json_report)
     redis_connection.publish("balkonkraftwerk", _json_report)
-    if tp.account is None:
+    if tibber_api_key is not None and tp.account is None:
         tp.setup()
     time.sleep(interval)
