@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/monokai.css">
+    <style type="text/css">
+        .reveal section img {
+            border: none;
+            box-shadow: none;
+        }
+    </style>
+    <title>Optimierung eines Balkonkraftwerks mit Open Source Software</title>
+    <meta name="author" content="Jannis Lübbe">
+</head>
+
+<body>
+    <div class="reveal">
+        <div class="slides">
+            <section>
+                <h3>Optimierung eines Balkonkraftwerks mit Open Source Software</h3>
+                <p>Jannis Lübbe<br>
+                    <a href="https://github.com/jaluebbe"><svg width="32" height="32" viewBox="0 0 16 16">
+                            <path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z" fill="#fff"></path>
+                        </svg>&nbsp;jaluebbe</a>
+                    <br><a href="https://www.rosen-deutschland.de/">ROSEN Gruppe</a>
+                </p>
+                <p><a href="https://digitalewoche-osnabrueck.de/">Digitale Woche Osnabrück 2024</a></p>
+            </section>
+            <section>
+                <h3>Typische Beschränkungen<br>einer Mietwohnung</h3>
+                <ul>
+                    <li>Kein Zugang zum Dach</li>
+                    <li>Keine dauerhaften Veränderungen am Gebäude</li>
+                    <li>Keine Modifikation der elektrischen Anlage</li>
+                    <li>Kein permanenter Zugang zum Stromzähler</li>
+                </ul>
+            </section>
+            <section>
+                <section>
+                    <h3>Balkonraftwerk</h3>
+                    <img src="../pycon_talk/img/balkonkraftwerk.jpg">
+                </section>
+                <section>
+                    <h3>Regulatorische Rahmenbedingungen</h3>
+                    <ul>
+                        <li>Kein Elektriker benötigt</li>
+                        <li>Wechselrichterleistung maximal <s>600</s> 800 W</li>
+                        <li><s>Anmeldung beim Netzbetreiber</s></li>
+                        <li><s>Stromzähler mit Rücklaufsperre benötigt</s></li>
+                        <li>Anmeldung im Marktstammdatenregister</li>
+                    </ul>
+                </section>
+                <section>
+                    <h3>Schematischer Aufbau</h3>
+                    <img src="../pycon_talk/img/balkonkraftwerk_schema.drawio.svg" height="500px">
+                </section>
+                <section>
+                    <h3>Balkonkraftwerk mit Akku</h3>
+                    <img src="../pycon_talk/img/balkonkraftwerk_battery_schema.drawio.svg" height="500px">
+                </section>
+            </section>
+            <section>
+                <section>
+                    <h3>Energieverbrauch messen</h3>
+                    <img src="../pycon_talk/img/power_measurement_devices.jpg" height="345px">
+                    <img src="../pycon_talk/img/electricity_meter.jpg" height="345px">
+                </section>
+                <section>
+                    <h3>Kochen und Waschen</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tätigkeit</th>
+                                <th>Leistung</th>
+                                <th>Energie</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Tasse Tee aufbrühen</td>
+                                <td>1200 W</td>
+                                <td>0.03 kWh</td>
+                            </tr>
+                            <tr>
+                                <td>Essen kochen</td>
+                                <td>2000 W</td>
+                                <td>0.4 kWh</td>
+                            </tr>
+                            <tr>
+                                <td>Pizza backen</td>
+                                <td>2500 W</td>
+                                <td>0.7 kWh</td>
+                            </tr>
+                            <tr>
+                                <td>Spülmaschine</td>
+                                <td>2200 W</td>
+                                <td>1 kWh</td>
+                            </tr>
+                            <tr>
+                                <td>Waschmaschine, 60&deg;C</td>
+                                <td>2200 W</td>
+                                <td>1.7 kWh</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+                <section>
+                    <h3>Interessante Verbraucher</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Gerät</th>
+                                <th>Leistung</th>
+                                <th>Energie</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>LAN/WLAN/Router (1 Tag)</td>
+                                <td>18 W</td>
+                                <td>0.4 kWh</td>
+                            </tr>
+                            <tr>
+                                <td>Lüftungsanlage (1 Tag)</td>
+                                <td>13 W</td>
+                                <td>0.3 kWh</td>
+                            </tr>
+                            <tr>
+                                <td>Kühlschrank (1 Tag)</td>
+                                <td>65 W</td>
+                                <td>0.3 kWh</td>
+                            </tr>
+                            <tr>
+                                <td>PC Arbeitsplatz (8 Stunden)</td>
+                                <td>150 W</td>
+                                <td>1.2 kWh</td>
+                            </tr>
+                            <tr>
+                                <td>Fernseher (2 Stunden)</td>
+                                <td>100 W</td>
+                                <td>0.2 kWh</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+                <section>
+                    <h3>Leistung per REST API auslesen</h3>
+                    <img src="../pycon_talk/img/shelly_mystrom.jpg" height="250px">
+                    <pre>HTTP GET Anfrage<code class="hljs http" data-trim>
+						http://mystrom-switch-xxxxxx/report
+					</code></pre>
+                    <pre>JSON Antwort<code class="hljs json" data-trim>
+						{"power":21.04,"Ws":21.1,"relay":true,"temperature":24.67}
+					</code></pre>
+                </section>
+            </section>
+            <section>
+                <section>
+                    <h3>Hoymiles Mikrowechselrichter<br>mit OpenDTU steuern</h3>
+                    <img src="../pycon_talk/img/opendtu.jpg" height="250px">
+                    <p>Auslesen und Konfigurieren von Mikrowechselrichtern</p>
+                    <p>
+                        <a href="https://github.com/tbnobody/OpenDTU">https://github.com/tbnobody/OpenDTU</a>
+                    </p>
+                    <aside class="notes">
+                        <p>ESP32-S3</p>
+                        <p>Nordic 2.4GHz NRF24L01+</p>
+                        <p>CMT2300A 868MHz</p>
+                    </aside>
+                </section>
+                <section>
+                    <img src="../pycon_talk/img/opendtu_ui.jpg" height="650px">
+                </section>
+                <section>
+                    <img src="../pycon_talk/img/opendtu_set_limits.jpg" height="650px">
+                </section>
+                <section>
+                    <h3>OpenDTU REST API</h3>
+                    <pre>HTTP GET Anfrage<code class="hljs http" data-trim>
+						http://opendtu/api/livedata/status?inv=112182xxxxxx
+					</code></pre>
+                    <pre>Auszug aus der JSON Antwort
+						<code class="hljs json" data-trim>
+							{
+								"serial": "112182xxxxxx",
+								"name": "Balkon Solar",
+								"reachable": true,
+								"producing": true,
+								"limit_absolute": 234.9,
+								"AC": {"0": {"Power": {"v": 49.59999847, "u":"W"}}},
+								"DC": {"0": {
+									"Voltage": {"v": 45.70000076, "u":"V"},
+									"Current": {"v": 1.139999986, "u":"A"},
+									"YieldTotal": {"v": 66.04799652, "u":"kWh"}
+								}}
+							}
+				        </code>
+					</pre>
+                </section>
+            </section>
+            <section>
+                <section>
+                    <h3>Informationsfluss - Live Daten</h3>
+                    <img src="../pycon_talk/img/information_flow_local.svg" width="100%" height="auto">
+                    <p>
+                        <a href="https://github.com/jaluebbe/balkonkraftwerk">https://github.com/jaluebbe/balkonkraftwerk</a>
+                    </p>
+                </section>
+                <section>
+                    <h3>Informationsfluss - Review</h3>
+                    <img src="../pycon_talk/img/information_flow_local_review.svg" width="100%" height="auto">
+                    <p>
+                        <a href="https://github.com/jaluebbe/balkonkraftwerk">https://github.com/jaluebbe/balkonkraftwerk</a>
+                    </p>
+                </section>
+                <section>
+                    <h3>Cloud Live Data Backend</h3>
+                    <img src="../pycon_talk/img/information_flow_cloud_live_view_backend.svg" width="100%" height="auto">
+                    <p>
+                        <a href="https://github.com/jaluebbe/balkonkraftwerk">https://github.com/jaluebbe/balkonkraftwerk</a>
+                    </p>
+                </section>
+                <section>
+                    <h3>Cloud Review Backend</h3>
+                    <img src="../pycon_talk/img/information_flow_cloud_review_backend.svg" width="100%" height="auto">
+                    <p>
+                        <a href="https://github.com/jaluebbe/balkonkraftwerk">https://github.com/jaluebbe/balkonkraftwerk</a>
+                    </p>
+                </section>
+            </section>
+            <section>
+                <h3>Live Daten und Review</h3>
+                <img src="../pycon_talk/img/live_data_view.jpg" height="480px">
+                <img src="../pycon_talk/img/review.jpg" height="480px">
+                <div>
+                    <button onclick="openDemo('https://balkonkraftwerk.jl82.de');">Demo im Browser öffnen</button>
+                </div>
+            </section>
+            <section>
+                <h3>Vielen Dank für Ihre Aufmerksamkeit</h3>
+                <img src="../pycon_talk/img/balkon.jpg">
+                <p>
+                    <a href="https://github.com/jaluebbe/balkonkraftwerk">https://github.com/jaluebbe/balkonkraftwerk</a>
+                </p>
+            </section>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            plugins: [RevealHighlight]
+        });
+    </script>
+    <script>
+        function openDemo(url) {
+            let demoWindow = window.open(
+                url,
+                "demo",
+                "width=1000,height=680"
+            )
+        }
+    </script>
+</body>
+
+</html>
