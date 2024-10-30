@@ -21,32 +21,28 @@ def create_day_review(df: pd.DataFrame) -> dict:
     consumer_power = df["consumer_power"] + df["unknown_consumers_power"].clip(
         lower=0
     )
+    producer_power = df["producer_power"]
+    consumer_energy = _energy_power(consumer_power, df.index)
+    producer_energy = _energy_power(producer_power, df.index)
+
     response["consumer_power"] = _plot_list(consumer_power)
-    response["producer_power"] = _plot_list(df["producer_power"])
-    response["consumer_energy"] = _energy_power(consumer_power, df.index)
-    response["producer_energy"] = _energy_power(df["producer_power"], df.index)
+    response["producer_power"] = _plot_list(producer_power)
+    response["consumer_energy"] = consumer_energy
+    response["producer_energy"] = producer_energy
     if "battery_power" in df.columns:
-        response["battery_power"] = _plot_list(df["battery_power"])
-        response["battery_energy"] = _energy_power(
-            df["battery_power"], df.index
+        battery_power = df["battery_power"]
+        response["battery_power"] = _plot_list(battery_power)
+        response["battery_energy"] = _energy_power(battery_power, df.index)
+        combined_power = producer_power + battery_power
+        response["plot_limit"] = float(max(200, combined_power.max()))
+        missing_power = np.maximum(
+            consumer_power - combined_power - battery_power.fillna(0), 0
         )
-        response["plot_limit"] = float(
-            max(200, (df["producer_power"] + df["battery_power"]).max())
-        )
-        response["missing_energy"] = _energy_power(
-            np.maximum(
-                consumer_power
-                - df["producer_power"]
-                - df["battery_power"].fillna(0),
-                0,
-            ),
-            df.index,
-        )
+        response["missing_energy"] = _energy_power(missing_power, df.index)
     else:
-        response["missing_energy"] = _energy_power(
-            np.maximum(consumer_power - df["producer_power"], 0), df.index
-        )
-        response["plot_limit"] = float(max(200, df["producer_power"].max()))
+        missing_power = np.maximum(consumer_power - producer_power, 0)
+        response["missing_energy"] = _energy_power(missing_power, df.index)
+        response["plot_limit"] = float(max(200, producer_power.max()))
     if "meter_consumed" in df.columns:
         _meter_consumed = df["meter_consumed"].dropna()
         response["meter_consumption_day"] = float(
