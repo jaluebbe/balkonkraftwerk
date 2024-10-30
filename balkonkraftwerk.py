@@ -18,13 +18,9 @@ from config import (
     interval,
 )
 
-redis_connection = redis.Redis(decode_responses=True)
-hostname = socket.gethostname()
-if tibber_api_key is not None:
-    tp = tibber_price(tibber_api_key)
 
-while True:
-    _report = {
+def initialize_report():
+    return {
         "utc": int(time.time()),
         "min_power": min_power,
         "consumers": [],
@@ -36,6 +32,15 @@ while True:
         "producer_power": 0,
         "unknown_consumers_power": 0,
     }
+
+
+redis_connection = redis.Redis(decode_responses=True)
+hostname = socket.gethostname()
+if tibber_api_key is not None:
+    tp = tibber_price(tibber_api_key)
+
+while True:
+    _report = initialize_report()
 
     # read out newmove one if available
     if newmove_one_host is not None:
