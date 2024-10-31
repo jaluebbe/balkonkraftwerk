@@ -40,20 +40,19 @@ def get_battery_status(report: dict) -> dict:
         "voltage": _battery_voltage,
         "ok": _battery_voltage > battery_on_voltage,
         "low": _battery_voltage < battery_off_voltage,
+        "full": (
+            _battery_voltage > battery_full_voltage
+            if battery_full_voltage is not None
+            else False
+        ),
     }
-    if battery_full_voltage is not None:
-        _response["full"] = _battery_voltage > battery_full_voltage
-    else:
-        _response["full"] = False
+    _reference = None
     if charger_reference.get("type") == "producer_inverter":
         _reference = _get_charger_reference_inverter(report)
     elif charger_reference.get("type") == "producer":
         _reference = _get_charger_reference_producer(report)
-    else:
-        _reference = None
-    if _reference is not None:
-        _charger_power = _reference["power"] * charger_reference["factor"]
-    else:
-        _charger_power = 0
+    _charger_power = (
+        _reference["power"] * charger_reference["factor"] if _reference else 0
+    )
     _response["charger_power"] = _charger_power
     return _response

@@ -19,51 +19,55 @@ log_directory = Path("../logs_json")
 
 
 async def push_data(target_uri: str):
-    redis_connection = aioredis.Redis(host=redis_host)
-    pubsub = redis_connection.pubsub(ignore_subscribe_messages=True)
-    await pubsub.subscribe(
-        "balkonkraftwerk", "electricity_meter", "smart_meter"
-    )
-    async with websockets.connect(target_uri) as target_websocket:
-        async for message in pubsub.listen():
-            await target_websocket.send(message["data"])
-    await redis_connection.close()
+    async with aioredis.Redis(host=redis_host) as redis_connection:
+        pubsub = redis_connection.pubsub(ignore_subscribe_messages=True)
+        await pubsub.subscribe(
+            "balkonkraftwerk", "electricity_meter", "smart_meter"
+        )
+        async with websockets.connect(target_uri) as target_websocket:
+            async for message in pubsub.listen():
+                await target_websocket.send(message["data"])
 
 
 async def serve_reviews(target_uri: str):
-    redis_connection = aioredis.Redis(host=redis_host, decode_responses=True)
-    async with websockets.connect(target_uri) as target_websocket:
-        async for message in target_websocket:
-            data = orjson.loads(message)
-            if data.get("type") != "review_request":
-                continue
-            logging.debug(f"review request received: {data}")
-            date = data["date"]
-            datasets = [
-                _file for _file in log_directory.glob(f"power_*_{date}.json")
-            ]
-            response = {"date": date, "success": False, "type": "review"}
-            if len(datasets) == 1:
-                response.update(create_day_review(pd.read_json(datasets[0])))
-            if len(datasets) != 0:
-                await target_websocket.send(orjson.dumps(response))
-                continue
-            datasets = [
-                key
-                async for key in redis_connection.scan_iter(f"power:*:{date}")
-            ]
-            if len(datasets) != 1:
-                await target_websocket.send(orjson.dumps(response))
-                continue
-            reversed_data = await redis_connection.lrange(datasets[0], 0, -1)
-            if len(reversed_data) > 0:
-                data = ",\n".join(reversed_data[::-1])
-                df = pd.DataFrame(
-                    [_row for _row in orjson.loads(f"[{data}]\n")]
+    async with aioredis.Redis(
+        host=redis_host, decode_responses=True
+    ) as redis_connection:
+        async with websockets.connect(target_uri) as target_websocket:
+            async for message in target_websocket:
+                data = orjson.loads(message)
+                if data.get("type") != "review_request":
+                    continue
+                logging.debug(f"review request received: {data}")
+                date = data["date"]
+                datasets = list(log_directory.glob(f"power_*_{date}.json"))
+                response = {"date": date, "success": False, "type": "review"}
+                if len(datasets) == 1:
+                    response.update(
+                        create_day_review(pd.read_json(datasets[0]))
+                    )
+                if len(datasets) != 0:
+                    await target_websocket.send(orjson.dumps(response))
+                    continue
+                datasets = [
+                    key
+                    async for key in redis_connection.scan_iter(
+                        f"power:*:{date}"
+                    )
+                ]
+                if len(datasets) != 1:
+                    await target_websocket.send(orjson.dumps(response))
+                    continue
+                reversed_data = await redis_connection.lrange(
+                    datasets[0], 0, -1
                 )
-                response.update(create_day_review(df))
-            await target_websocket.send(orjson.dumps(response))
-    await redis_connection.close()
+                if len(reversed_data) > 0:
+                    data = ",\n".join(reversed_data[::-1])
+                    df = pd.DataFrame(
+                        [_row for _row in orjson.loads(f"[{data}]\n")]
+                    )
+                    response.update(create_day_review(df))
+                await target_websocket.send(orjson.dumps(response))
 
 
 async def main(target_uri: str):

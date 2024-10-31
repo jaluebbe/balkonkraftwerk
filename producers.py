@@ -1,7 +1,9 @@
-import datetime
+import logging
 import mystrom_switch
 import shelly_devices
 from config import producers
+
+logging.basicConfig(level=logging.INFO)
 
 
 def process_producers(report: dict) -> None:
@@ -21,4 +23,4 @@ def process_producers(report: dict) -> None:
             report["producer_power"] += _power
             report["producers"].append(_data)
         else:
-            print(f"Readout of {_producer} failed.")
+            logging.error(f"Readout of {_producer} failed.")
