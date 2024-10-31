@@ -11,9 +11,7 @@ def _read_device(device: dict) -> dict | None:
     if device.get("type") == "mystrom":
         return mystrom_switch.read_switch(device["host"])
     elif device.get("type") == "shelly":
-        return shelly_devices.read_device(
-            device["host"], device["generation"]
-        )
+        return shelly_devices.read_device(device["host"], device["generation"])
 
 
 def process_consumers_readout(report: dict) -> None:
@@ -74,16 +72,19 @@ def disable_consumer(consumer: dict) -> dict | None:
         )
 
 
-def process_optional_consumers(report: dict, required_limit: float) -> float:
+def process_optional_consumers(
+    report: dict, required_limit: float, additional_power: float = 0
+) -> float:
     for _consumer in report["optional_consumers"]:
-        if required_limit > 0 and _consumer["power"] > 0:
-            disable_consumer(_consumer)
-            required_limit -= _consumer["power"]
-        elif (
-            required_limit <= 0
-            and _consumer["power"] == 0
-            and required_limit + _consumer["nominal_power"] < 0
-        ):
-            enable_consumer(_consumer)
-            required_limit += _consumer["nominal_power"]
+        if required_limit - additional_power > 0:
+            if _consumer["power"] > 0:
+                disable_consumer(_consumer)
+                required_limit -= _consumer["power"]
+        else:
+            if (
+                _consumer["power"] == 0
+                and required_limit + _consumer["nominal_power"] < 0
+            ):
+                enable_consumer(_consumer)
+                required_limit += _consumer["nominal_power"]
     return required_limit
