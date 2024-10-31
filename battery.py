@@ -4,6 +4,7 @@ from config import (
     battery_full_voltage,
     battery_on_voltage,
     battery_off_voltage,
+    max_inverter_limit,
 )
 
 
@@ -16,7 +17,8 @@ def _get_charger_reference_inverter(report: dict) -> dict | None:
     if len(_inverters) != 1:
         return
     _inverter = _inverters[0]
-    _inverter["power"] = _inverter.pop("ac_power")
+    if not "power" in _inverter and "ac_power" in _inverter:
+        _inverter["power"] = _inverter.pop("ac_power")
     return _inverter
 
 
@@ -56,4 +58,8 @@ def get_battery_status(report: dict) -> dict:
     else:
         _charger_power = 0
     _response["charger_power"] = _charger_power
+    _response["available_power"] = min(
+        max(_charger_power - report["battery_power"], 0),
+        max_inverter_limit,
+    )
     return _response

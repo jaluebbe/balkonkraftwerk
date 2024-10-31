@@ -81,9 +81,11 @@ def disable_consumer(consumer: dict) -> dict | None:
         )
 
 
-def process_optional_consumers(report: dict, required_limit: float) -> float:
+def process_optional_consumers(
+    report: dict, required_limit: float, additional_power: float = 0
+) -> float:
     for _consumer in report["optional_consumers"]:
-        if required_limit > 0:
+        if required_limit - additional_power > 0:
             if _consumer["power"] > 0:
                 disable_consumer(_consumer)
                 required_limit -= _consumer["power"]

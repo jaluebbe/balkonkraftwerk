@@ -6,6 +6,7 @@ import redis
 from consumers import process_consumers_readout, process_optional_consumers
 from producers import process_producers
 from inverters import process_inverters_readout, process_inverter_limit
+from battery import get_battery_status
 from newmove_one import read_newmove_one
 from unknown_consumers import process_unknown_consumers
 from tibber_price import tibber_price
@@ -49,14 +50,15 @@ while True:
         _required_limit += max(
             0, _report["unknown_consumers_power"] - unknown_consumers_offset
         )
-    _required_limit = process_optional_consumers(_report, _required_limit)
     if _report.get("battery_power") is not None:
-        _report["required"] = round(
-            _required_limit - _report["battery_power"], 1
+        _battery_status = get_battery_status(_report)
+        _required_limit = process_optional_consumers(
+            _report, _required_limit, _battery_status["available_power"]
         )
         process_inverter_limit(_report, _required_limit)
     else:
-        _report["required"] = round(_required_limit, 1)
+        _required_limit = process_optional_consumers(_report, _required_limit)
+    _report["required"] = round(_required_limit, 1)
     for _key in [
         "consumer_power",
         "producer_power",
