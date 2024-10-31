@@ -11,6 +11,11 @@ response = requests.get(
     params={"category": "power"},
 )
 for _name in response.json():
-    if _name.split("_")[-1].startswith(today):
+    _date = _name.split("_")[-1]
+    if _date.startswith(today) or today.startswith(_date):
         continue
     requests.get(f"http://{HOSTNAME}:{PORT}/api/move_to_archive/{_name}")
+    # trigger creation of review files
+    requests.get(
+        f"http://{HOSTNAME}:{PORT}/api/review/day", params={"date": _date}
+    )
