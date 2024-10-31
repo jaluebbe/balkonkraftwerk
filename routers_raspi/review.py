@@ -14,11 +14,23 @@ router = APIRouter()
 
 
 async def get_local_review(date: str):
-    datasets = [_file for _file in LOG_DIRECTORY.glob(f"power_*_{date}.json")]
-    response = {"date": date, "success": False, "type": "review"}
+    datasets = list(LOG_DIRECTORY.glob(f"review_*_{date}.json"))
     if len(datasets) == 1:
-        response.update(create_day_review(pd.read_json(datasets[0])))
-    if len(datasets) != 0:
+        with open(datasets[0], "rb") as file:
+            return orjson.loads(file.read())
+    datasets = list(LOG_DIRECTORY.glob(f"power_*_{date}.json"))
+    response = {"date": date, "success": False, "type": "review"}
+    if len(datasets) > 1:
+        return response
+    elif len(datasets) == 1:
+        power_file = datasets[0]
+        response.update(create_day_review(pd.read_json(power_file)))
+        json_response = orjson.dumps(response)
+        review_file = power_file.with_name(
+            power_file.name.replace("power_", "review_", 1)
+        )
+        with open(review_file, "wb") as file:
+            file.write(json_response)
         return response
     async with aioredis.Redis(
         host=REDIS_HOST, decode_responses=True
