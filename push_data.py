@@ -10,16 +10,12 @@ from redis import asyncio as aioredis
 from review import create_day_review
 from config import push_uri, access_token
 
-if "REDIS_HOST" in os.environ:
-    redis_host = os.environ["REDIS_HOST"]
-else:
-    redis_host = "127.0.0.1"
-
-log_directory = Path("../logs_json")
+REDIS_HOST = os.getenv("REDIS_HOST", "127.0.0.1")
+LOG_DIRECTORY = Path("../logs_json")
 
 
 async def push_data(target_uri: str):
-    async with aioredis.Redis(host=redis_host) as redis_connection:
+    async with aioredis.Redis(host=REDIS_HOST) as redis_connection:
         pubsub = redis_connection.pubsub(ignore_subscribe_messages=True)
         await pubsub.subscribe(
             "balkonkraftwerk", "electricity_meter", "smart_meter"
@@ -31,7 +27,7 @@ async def push_data(target_uri: str):
 
 async def serve_reviews(target_uri: str):
     async with aioredis.Redis(
-        host=redis_host, decode_responses=True
+        host=REDIS_HOST, decode_responses=True
     ) as redis_connection:
         async with websockets.connect(target_uri) as target_websocket:
             async for message in target_websocket:
@@ -40,13 +36,25 @@ async def serve_reviews(target_uri: str):
                     continue
                 logging.debug(f"review request received: {data}")
                 date = data["date"]
-                datasets = list(log_directory.glob(f"power_*_{date}.json"))
+                datasets = list(LOG_DIRECTORY.glob(f"review_*_{date}.json"))
+                if len(datasets) == 1:
+                    with open(datasets[0], "rb") as file:
+                        await target_websocket.send(file.read())
+                    continue
+                datasets = list(LOG_DIRECTORY.glob(f"power_*_{date}.json"))
                 response = {"date": date, "success": False, "type": "review"}
                 if len(datasets) == 1:
-                    response.update(
-                        create_day_review(pd.read_json(datasets[0]))
+                    power_file = datasets[0]
+                    response.update(create_day_review(pd.read_json(power_file)))
+                    json_response = orjson.dumps(response)
+                    await target_websocket.send(json_response)
+                    review_file = power_file.with_name(
+                        power_file.name.replace("power_", "review_", 1)
                     )
-                if len(datasets) != 0:
+                    with open(review_file, "wb") as file:
+                        file.write(json_response)
+                    continue
+                elif len(datasets) > 1:
                     await target_websocket.send(orjson.dumps(response))
                     continue
                 datasets = [
