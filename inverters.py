@@ -46,16 +46,10 @@ def process_inverters_readout(report: dict) -> None:
 def process_inverter_limit(report: dict, required_limit: float) -> None:
     _inverter = report["battery_inverter"]
     _battery = get_battery_status(report)
-    if _battery and _battery["full"]:
-        _new_inverter_limit = min(
-            max_inverter_limit,
-            max(min_inverter_limit, _battery["charger_power"], required_limit),
-        )
-    elif (
+    if (
         required_limit < 0
         and not _inverter["enabled"]
         or required_limit < inverter_shutdown_value
-        and (not _battery or not _battery["full"])
     ):
         _new_inverter_limit = 0
     elif _battery and _battery["low"]:

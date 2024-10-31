@@ -14,10 +14,7 @@ import routers_raspi.review as review
 import routers_raspi.meters as meters
 
 hostname = socket.gethostname()
-if "REDIS_HOST" in os.environ:
-    redis_host = os.environ["REDIS_HOST"]
-else:
-    redis_host = "127.0.0.1"
+REDIS_HOST = os.getenv("REDIS_HOST", "127.0.0.1")
 
 app = FastAPI()
 
@@ -40,11 +37,13 @@ async def root(request: Request):
 @app.get("/api/current_power")
 async def get_current_power():
     _key = "power:{}:{}".format(hostname, time.strftime("%Y%m%d"))
-    redis_connection = aioredis.Redis(host=redis_host, decode_responses=True)
-    _data = await redis_connection.lrange(_key, 0, 0)
-    if len(_data) == 0:
-        raise HTTPException(status_code=404, detail="no data available")
-    return Response(content=_data[0], media_type="application/json")
+    async with aioredis.Redis(
+        host=REDIS_HOST, decode_responses=True
+    ) as redis_connection:
+        _data = await redis_connection.lrange(_key, 0, 0)
+        if len(_data) == 0:
+            raise HTTPException(status_code=404, detail="no data available")
+        return Response(content=_data[0], media_type="application/json")
 
 
 if __name__ == "__main__":

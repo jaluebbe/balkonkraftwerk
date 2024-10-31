@@ -15,11 +15,8 @@ import routers_cloud.review as review
 import routers_cloud.meters as meters
 import routers_cloud.github_auth as github_auth
 
-if "REDIS_HOST" in os.environ:
-    redis_host = os.environ["REDIS_HOST"]
-else:
-    redis_host = "127.0.0.1"
-
+REDIS_HOST = os.getenv("REDIS_HOST", "127.0.0.1")
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 app = FastAPI()
 
@@ -29,8 +26,7 @@ app.include_router(meters.router)
 app.include_router(review.router)
 app.include_router(github_auth.router)
 
-secret_key = os.environ["SECRET_KEY"]
-app.add_middleware(SessionMiddleware, secret_key=secret_key, https_only=True)
+app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, https_only=True)
 
 
 @app.get("/logout")
@@ -65,20 +61,21 @@ async def redis_handler(websocket: WebSocket, email: str):
         async for message in pubsub.listen():
             await websocket.send_text(message["data"])
 
-    redis_connection = aioredis.Redis(host=redis_host, decode_responses=True)
-    pubsub = redis_connection.pubsub(ignore_subscribe_messages=True)
-    consumer_task = asyncio.create_task(
-        consumer_handler(redis_connection, websocket)
-    )
-    producer_task = asyncio.create_task(producer_handler(pubsub, websocket))
-    done, pending = await asyncio.wait(
-        [consumer_task, producer_task], return_when=asyncio.FIRST_COMPLETED
-    )
-    logging.debug(f"Done task: {done}")
-    for task in pending:
-        logging.debug(f"Cancelling task: {task}")
-        task.cancel()
-    await redis_connection.close()
+    async with aioredis.Redis(
+        host=REDIS_HOST, decode_responses=True
+    ) as redis_connection:
+        pubsub = redis_connection.pubsub(ignore_subscribe_messages=True)
+        consumer_task = asyncio.create_task(
+            consumer_handler(redis_connection, websocket)
+        )
+        producer_task = asyncio.create_task(producer_handler(pubsub, websocket))
+        done, pending = await asyncio.wait(
+            [consumer_task, producer_task], return_when=asyncio.FIRST_COMPLETED
+        )
+        logging.debug(f"Done task: {done}")
+        for task in pending:
+            logging.debug(f"Cancelling task: {task}")
+            task.cancel()
 
 
 async def validate_token(access_token: str) -> str:

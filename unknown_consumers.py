@@ -39,10 +39,7 @@ def process_unknown_consumers(report: dict) -> None:
     else:
         report["unknown_consumers_power"] = 0
         return
-    if report.get("battery_power") is None:
-        _battery_power = 0
-    else:
-        _battery_power = report["battery_power"]
+    _battery_power = report.get("battery_power", 0)
     report["unknown_consumers_power"] = (
         _meter_power
         - report["consumer_power"]
