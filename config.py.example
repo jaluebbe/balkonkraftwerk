@@ -28,6 +28,9 @@ unknown_consumers_interval = 45
 producers = [
     {"host": "192.168.1.104", "name": "west balcony", "type": "shelly", "generation": 2}
 ]
+battery_producers = [
+    {"type": "newmove_one", "port": "2"}
+]
 # inverters.py
 open_dtu_host = "open-dtu"
 open_dtu_password = "openDTU42"

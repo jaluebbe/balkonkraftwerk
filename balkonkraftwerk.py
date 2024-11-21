@@ -55,7 +55,7 @@ while True:
         _required_limit += max(
             0, _report["unknown_consumers_power"] - unknown_consumers_offset
         )
-    if _report.get("battery_power") is not None:
+    if _report.get("battery_inverter") is not None:
         _battery_status = get_battery_status(_report)
         _required_limit = process_optional_consumers(
             _report, _required_limit, _battery_status["available_power"]

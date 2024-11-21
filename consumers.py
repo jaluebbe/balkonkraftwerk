@@ -7,11 +7,19 @@ from config import scheduled_consumers, consumers, optional_consumers
 logging.basicConfig(level=logging.INFO)
 
 
-def _read_device(device: dict) -> dict | None:
-    if device.get("type") == "mystrom":
-        return mystrom_switch.read_switch(device["host"])
-    elif device.get("type") == "shelly":
-        return shelly_devices.read_device(device["host"], device["generation"])
+def _process_consumer(consumer: dict, report: dict) -> dict | None:
+    if consumer.get("type") == "mystrom":
+        return mystrom_switch.read_switch(consumer["host"])
+    elif consumer.get("type") == "shelly":
+        return shelly_devices.read_device(
+            consumer["host"], consumer["generation"]
+        )
+    elif (
+        consumer.get("type") == "newmove_one"
+        and consumer.get("port") is not None
+        and report.get("newmove_one") is not None
+    ):
+        return report["newmove_one"]["ports"]["out1"]
 
 
 def process_consumers_readout(report: dict) -> None:
@@ -32,7 +40,7 @@ def process_consumers_readout(report: dict) -> None:
             report["consumer_power"] += _consumer["power"]
             report["scheduled_consumers"].append(_consumer)
     for _consumer in consumers:
-        _data = _read_device(_consumer)
+        _data = _process_consumer(_consumer, report)
         if _data is not None:
             _power = _data["power"]
             if _power == 0:
@@ -43,7 +51,7 @@ def process_consumers_readout(report: dict) -> None:
         else:
             logging.error(f"Readout of {_consumer} failed.")
     for _consumer in optional_consumers:
-        _data = _read_device(_consumer)
+        _data = _process_consumer(_consumer, report)
         if _data is not None:
             _power = _data["power"]
             if not _consumer.get("ignore"):
