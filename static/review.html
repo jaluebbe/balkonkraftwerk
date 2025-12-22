@@ -72,46 +72,85 @@
         <p><a href="index.html">live data</a></p>
     </div>
     <script>
+        // Constants
+        const DEFAULT_POWER_RANGE = 200;
+        const MIN_DATE = "2023-08-13";
+
+        // Cache DOM elements (will be initialized after DOM is loaded)
+        const elements = {
+            reviewPlot: null,
+            dateInput: null,
+            connectionStatus: null,
+            energyConsumed: null,
+            energyProduced: null,
+            energyMissing: null,
+            energyBattery: null,
+            energyMeterConsumed: null,
+            energyMeterProduced: null
+        };
+
+        // Initialize DOM element references
+        function initializeElements() {
+            elements.reviewPlot = document.getElementById('reviewPlot');
+            elements.dateInput = document.getElementById('dateInput');
+            elements.connectionStatus = document.getElementById('connection_status');
+            elements.energyConsumed = document.getElementById('energyConsumed');
+            elements.energyProduced = document.getElementById('energyProduced');
+            elements.energyMissing = document.getElementById('energyMissing');
+            elements.energyBattery = document.getElementById('energyBattery');
+            elements.energyMeterConsumed = document.getElementById('energyMeterConsumed');
+            elements.energyMeterProduced = document.getElementById('energyMeterProduced');
+        }
+
         function toggle_by_class(cls, on) {
-            var lst = document.getElementsByClassName(cls);
-            for (var i = 0; i < lst.length; ++i) {
-                lst[i].style.display = on ? '' : 'none';
+            const elements = document.getElementsByClassName(cls);
+            for (let i = 0; i < elements.length; i++) {
+                elements[i].style.display = on ? '' : 'none';
             }
         }
 
-        const layout = {
-            margin: {
-                t: 30,
-                r: 45,
-                b: 5,
-                l: 40
-            },
-            xaxis: {
-                automargin: true,
-                tickangle: 0,
-                type: 'date',
-            },
-            yaxis: {
-                range: [0, 200],
-                title: {
-                    text: "power / W"
-                }
-            },
-            yaxis2: {
-                title: {
-                    text: "price / €",
+        function createLayout(hasPriceData) {
+            const baseLayout = {
+                margin: {
+                    t: 30,
+                    r: hasPriceData ? 45 : 5,
+                    b: 5,
+                    l: 40
                 },
-                overlaying: 'y',
-                side: 'right'
-            },
-            legend: {
-                yanchor: "top",
-                y: 0.99,
-                xanchor: "left",
-                x: 0.01
-            },
-            "hovermode": "x unified"
-        };
+                xaxis: {
+                    automargin: true,
+                    tickangle: 0,
+                    type: 'date',
+                },
+                yaxis: {
+                    range: [0, DEFAULT_POWER_RANGE],
+                    title: {
+                        text: "power / W"
+                    }
+                },
+                legend: {
+                    yanchor: "top",
+                    y: 0.99,
+                    xanchor: "left",
+                    x: 0.01
+                },
+                hovermode: "x unified"
+            };
+
+            // Only add second y-axis if price data is present
+            if (hasPriceData) {
+                baseLayout.yaxis2 = {
+                    title: {
+                        text: "price / €",
+                    },
+                    overlaying: 'y',
+                    side: 'right'
+                };
+            }
+
+            return baseLayout;
+        }
+
         const config = {
             modeBarButtonsToRemove: [
                 'select2d', 'lasso2d', 'toggleSpikelines', 'zoomIn2d',
@@ -121,11 +160,16 @@
             responsive: true,
             displayModeBar: true
         };
-        var spinner = new Spinner();
+
+        const spinner = new Spinner();
 
         function refreshPlot(data) {
+            const hasPriceData = data.price != null;
+            const layout = createLayout(hasPriceData);
             layout.yaxis.range = [0, data.plot_limit];
-            let plotData = [{
+
+            const plotData = [
+                {
                     hovertemplate: '%{y} W',
                     line: {
                         color: '#0055ff',
@@ -154,6 +198,7 @@
                     type: 'scatter'
                 }
             ];
+
             if (data.battery_power != null) {
                 plotData.push({
                     hovertemplate: '%{y} W',
@@ -170,7 +215,8 @@
                     type: 'scatter'
                 });
             }
-            if (data.price != null) {
+
+            if (hasPriceData) {
                 plotData.push({
                     mode: 'lines',
                     name: '💰→🔌',
@@ -186,54 +232,86 @@
                     type: 'scatter'
                 });
             }
+
             Plotly.react("reviewPlot", plotData, layout, config);
         }
 
         function refreshTable(data) {
-            energyConsumed.innerHTML = parseFloat(data.consumer_energy).toFixed(2);
-            energyProduced.innerHTML = parseFloat(data.producer_energy).toFixed(2);
-            energyMissing.innerHTML = parseFloat(data.missing_energy).toFixed(2);
-            energyBattery.innerHTML = parseFloat(data.battery_energy ?? 0).toFixed(2);
+            elements.energyConsumed.innerHTML = parseFloat(data.consumer_energy || 0).toFixed(2);
+            elements.energyProduced.innerHTML = parseFloat(data.producer_energy || 0).toFixed(2);
+            elements.energyMissing.innerHTML = parseFloat(data.missing_energy || 0).toFixed(2);
+            elements.energyBattery.innerHTML = parseFloat(data.battery_energy || 0).toFixed(2);
+
             if (data.meter_consumption_day == null) {
                 toggle_by_class("meterAvailable", false);
             } else {
                 toggle_by_class("meterAvailable", true);
-                energyMeterProduced.innerHTML = parseFloat(data.meter_production_day).toFixed(2);
-                energyMeterConsumed.innerHTML = parseFloat(data.meter_consumption_day).toFixed(2);
+                elements.energyMeterProduced.innerHTML = parseFloat(data.meter_production_day).toFixed(2);
+                elements.energyMeterConsumed.innerHTML = parseFloat(data.meter_consumption_day).toFixed(2);
             }
         }
 
-        function loadData() {
-            spinner.spin(reviewPlot);
-            let date = dateInput.value.split("-").join("");
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', "/api/review/day?date=" + date);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.onload = function() {
-                if (xhr.status === 200) {
-                    let data = JSON.parse(xhr.responseText);
+        async function loadData() {
+            spinner.spin(elements.reviewPlot);
+            const date = elements.dateInput.value.split("-").join("");
+            
+            try {
+                const response = await fetch(`/api/review/day?date=${date}`, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
                     console.log(data);
                     refreshPlot(data);
                     refreshTable(data);
-                    connection_status.innerHTML = "Data received for " + data.date;
+                    elements.connectionStatus.innerHTML = `Data received for ${data.date}`;
+                } else if (response.status === 401) {
+                    const data = await response.json();
+                    elements.connectionStatus.innerHTML = data.detail;
+                    const emptyLayout = createLayout(false);
+                    Plotly.react("reviewPlot", [], emptyLayout, config);
+                    refreshTable({
+                        consumer_energy: 0,
+                        producer_energy: 0,
+                        missing_energy: 0,
+                        battery_energy: 0
+                    });
                 } else {
-                    if (xhr.status === 401) {
-                        let data = JSON.parse(xhr.responseText);
-                        connection_status.innerHTML = data.detail;
-                    } else {
-                        connection_status.innerHTML = "communication problem"
-                        console.error(xhr.status + ": " + xhr.response);
-                    }
-                    Plotly.react("reviewPlot", [], layout, config);
-                    refreshTable({});
+                    elements.connectionStatus.innerHTML = "communication problem";
+                    console.error(`${response.status}: ${await response.text()}`);
+                    const emptyLayout = createLayout(false);
+                    Plotly.react("reviewPlot", [], emptyLayout, config);
+                    refreshTable({
+                        consumer_energy: 0,
+                        producer_energy: 0,
+                        missing_energy: 0,
+                        battery_energy: 0
+                    });
                 }
-                dateInput.max = new Date().toISOString().split("T")[0];
+            } catch (error) {
+                elements.connectionStatus.innerHTML = "connection failed";
+                console.error('Fetch error:', error);
+                const emptyLayout = createLayout(false);
+                Plotly.react("reviewPlot", [], emptyLayout, config);
+                refreshTable({
+                    consumer_energy: 0,
+                    producer_energy: 0,
+                    missing_energy: 0,
+                    battery_energy: 0
+                });
+            } finally {
+                elements.dateInput.max = new Date().toISOString().split("T")[0];
                 spinner.stop();
-            };
-            xhr.send();
+            }
         }
-        dateInput.min = "2023-08-13";
-        dateInput.max = new Date().toISOString().split("T")[0];
+
+        // Initialize date input constraints
+        initializeElements();
+        elements.dateInput.min = MIN_DATE;
+        elements.dateInput.max = new Date().toISOString().split("T")[0];
     </script>
 </body>
 

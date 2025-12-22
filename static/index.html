@@ -27,6 +27,7 @@
 <body>
     <script src="gauge.min.js"></script>
     <script src="no_sleep.min.js"></script>
+    <script src="power_monitor_shared.js"></script>
     <div style="text-align: center;"><canvas id="canvas-preview" width="380" height="230"></canvas></div>
     <table style="width:100%;">
         <tr>
@@ -96,224 +97,42 @@
     <p><a href="https://github.com/jaluebbe/balkonkraftwerk">Source on GitHub</a></p>
     <p id="privacy_statement"></p>
     <script>
-        function addPrivacyStatement() {
-            var xhr = new XMLHttpRequest();
-            xhr.open('HEAD', "./datenschutz.html");
-            xhr.onload = function() {
-                if (xhr.status === 200)
-                    privacy_statement.innerHTML = '<a href="./datenschutz.html" target="_blank">Impressum & Datenschutzerkl&auml;rung</a>';
-            }
-            xhr.send();
-        }
-        addPrivacyStatement();
-        var noSleep = new NoSleep();
-        var ws = undefined;
-        var ws_protocol = undefined;
-        if (window.location.protocol == "https:") {
-            ws_protocol = "wss:"
-        } else {
-            ws_protocol = "ws:"
-        }
-
-        function toggle_by_class(cls, on) {
-            var lst = document.getElementsByClassName(cls);
-            for(var i = 0; i < lst.length; ++i) {
-                lst[i].style.display = on ? '' : 'none';
-            }
-        }
-
-        function colspan_by_class(cls, colSpan) {
-            var lst = document.getElementsByClassName(cls);
-            for(var i = 0; i < lst.length; ++i) {
-                lst[i].colSpan = colSpan;
-            }
-        }
-
-        const gaugeOpts = {
-            angle: 0.1,
-            lineWidth: 0.44,
-            pointer: {
-                length: 0.63,
-                strokeWidth: 0.035
-            },
-            limitMax: true,
-            limitMin: true,
-            strokeColor: '#E0E0E0',
-            staticLabels: {
-                font: "14px sans-serif",
-                labels: [-200, -150, -100, -50, 0, 50, 100, 150, 200],
-                color: "#000000",
-                fractionDigits: 0
-            },
-            renderTicks: {
-                divisions: 8,
-                divWidth: 1.6,
-                divLength: 0.5,
-                divColor: '#333333',
-                subDivisions: 5,
-                subLength: 0.3,
-                subWidth: 0.4,
-                subColor: '#666666'
-            },
-            staticZones: [{
-                    strokeStyle: "#30B32D",
-                    min: -200,
-                    max: 0
-                }, // Green
-                {
-                    strokeStyle: "#FFDD00",
-                    min: 0,
-                    max: 200
-                } // Yellow
-            ]
-        };
-        const canvasTarget = document.getElementById('canvas-preview');
-        const gauge = new Gauge(canvasTarget).setOptions(gaugeOpts);
-        gauge.maxValue = 200;
-        gauge.setMinValue(-200);
-        gauge.set(0);
-        var lastMessageUtc = undefined;
-        var lastSmartMeterUtc = undefined;
-
-        function processMeterConsumption(message) {
-            if (message.accumulatedConsumption == null ||
-                message.accumulatedConsumption != null &&
-                message.accumulatedProduction != null &&
-                message.accumulatedConsumption + message.accumulatedProduction > 0
-            ) {
-                meterConsumption.innerHTML = parseFloat(message.lastMeterConsumption).toFixed(2);
-                meterProduction.innerHTML = parseFloat(message.lastMeterProduction).toFixed(2);
-                toggle_by_class("meterConsumptionAvailable", true);
-            } else {
-                toggle_by_class("meterConsumptionAvailable", false);
-            }
-        }
-
-        function processMeterPower(message) {
-            let consumptionPower = parseFloat(message.power)
-            let productionPower = parseFloat(message.powerProduction)
-            gauge.set(consumptionPower - productionPower);
-            let extendedDataAvailable = false;
-            let phaseColSpan = 4;
-            if (message.voltagePhase1 != null) {
-                voltageL1.innerHTML = parseFloat(message.voltagePhase1).toFixed(1);
-                voltageL2.innerHTML = parseFloat(message.voltagePhase2).toFixed(1);
-                voltageL3.innerHTML = parseFloat(message.voltagePhase3).toFixed(1);
-                extendedDataAvailable = true;
-                phaseColSpan -= 1;
-                toggle_by_class("voltageLabel", true);
-            } else {
-                toggle_by_class("voltageLabel", false);
-            }
-            if (message.currentL1 != null) {
-                currentL1.innerHTML = parseFloat(message.currentL1).toFixed(2);
-                currentL2.innerHTML = parseFloat(message.currentL2).toFixed(2);
-                currentL3.innerHTML = parseFloat(message.currentL3).toFixed(2);
-                extendedDataAvailable = true;
-                phaseColSpan -= 1;
-                toggle_by_class("currentLabel", true);
-            } else {
-                toggle_by_class("currentLabel", false);
-            }
-            if (message.powerL1 != null) {
-                powerL1.innerHTML = parseFloat(message.powerL1).toFixed(1);
-                powerL2.innerHTML = parseFloat(message.powerL2).toFixed(1);
-                powerL3.innerHTML = parseFloat(message.powerL3).toFixed(1);
-                extendedDataAvailable = true;
-                phaseColSpan -= 1;
-                toggle_by_class("powerLabel", true);
-            } else {
-                toggle_by_class("powerLabel", false);
-            }
-            toggle_by_class("singlePhaseData", extendedDataAvailable);
-            if (phaseColSpan < 4)
-                colspan_by_class("phaseLabel", phaseColSpan);
-            meterConsumptionPower.innerHTML = consumptionPower;
-            meterProductionPower.innerHTML = productionPower;
-        }
-
-
-        function processMessage(message) {
-            producerPower.innerHTML = message.producer_power;
-            consumerPower.innerHTML = message.consumer_power;
-            if (message.unknown_consumers_power != null) {
-                unknownConsumersPower.innerHTML = message.unknown_consumers_power;
-                toggle_by_class("unknownData", true);
-            } else {
-                toggle_by_class("unknownData", false);
-            }
-            if (message.battery_inverter != undefined) {
-                batteryPower.innerHTML = message.battery_power;
-                batteryVoltage.innerHTML = message.battery_inverter.dc_voltage;
-                batteryCurrent.innerHTML = message.battery_inverter.dc_current;
-                toggle_by_class("batteryData", true);
-            } else {
-                toggle_by_class("batteryData", false);
-            }
-            if (message.tibber_price != undefined) {
-                priceLevel.innerHTML = message.tibber_price.level;
-                priceTotal.innerHTML = parseFloat(message.tibber_price.total).toFixed(2);
-                priceCurrency.innerHTML = message.tibber_price.currency;
-                toggle_by_class("priceData", true);
-            } else {
-                toggle_by_class("priceData", false);
+        async function addPrivacyStatement() {
+            try {
+                const response = await fetch("./datenschutz.html", { method: 'HEAD' });
+                if (response.ok) {
+                    document.getElementById('privacy_statement').innerHTML = 
+                        '<a href="./datenschutz.html" target="_blank">Impressum & Datenschutzerkl&auml;rung</a>';
+                }
+            } catch (error) {
+                console.log('Privacy statement not available');
             }
         }
 
         function connect() {
-            ws = new WebSocket(ws_protocol + "//" + window.location.host + "/ws");
-            ws.onmessage = function(event) {
-                const utcNow = Date.now() / 1e3;
-                connection_status.innerHTML = "Connected";
-                let message = JSON.parse(event.data);
-                if (message.type == "electricity_meter") {
-                    processMeterConsumption(message)
-                    if (lastSmartMeterUtc == null || utcNow - lastSmartMeterUtc > 30)
-                        processMeterPower(message);
-                } else if (message.type == "smart_meter") {
-                    lastSmartMeterUtc = message.utc;
-                    processMeterPower(message);
-                } else {
-                    processMessage(message);
-                }
-                lastMessageUtc = message.utc;
-            }
+            ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws`);
+            ws.onmessage = handleWebSocketMessage;
+
             ws.onclose = function(e) {
-                if (e.code == 1008) {
-                    let statusMessage = "User not identified. Socket is closed.";
+                if (e.code === 1008) {
+                    const statusMessage = "User not identified. Socket is closed.";
                     console.error(statusMessage);
-                    connection_status.innerHTML = statusMessage;
-                    return
+                    elements.connectionStatus.innerHTML = statusMessage;
+                    return;
                 }
-                let statusMessage = "Socket is closed. Reconnect will be attempted in 5 seconds.";
+                const statusMessage = "Socket is closed. Reconnect will be attempted in 5 seconds.";
                 console.log(statusMessage, e.reason);
-                connection_status.innerHTML = statusMessage;
+                elements.connectionStatus.innerHTML = statusMessage;
                 setTimeout(function() {
                     connect();
                 }, 5000);
-            }
+            };
         }
 
-        function checkConnection() {
-            const utcNow = Date.now() / 1e3;
-            if (lastMessageUtc != null && utcNow - lastMessageUtc > 30) {
-                ws.onclose = null;
-                ws.onmessage = null;
-                ws.close(1000);
-                connect();
-            }
-        }
-
+        // Initialize application
+        initialize();
+        addPrivacyStatement();
         connect();
-
-        onfocus = (event) => {
-            checkConnection()
-        };
-
-        document.addEventListener('click', function enableNoSleep() {
-            document.removeEventListener('click', enableNoSleep, false);
-            noSleep.enable();
-        }, false);
     </script>
 </body>
 
