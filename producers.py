@@ -13,12 +13,6 @@ def _process_producer(producer: dict, report: dict) -> dict | None:
         return shelly_devices.read_device(
             producer["host"], producer["generation"]
         )
-    elif (
-        producer.get("type") == "newmove_one"
-        and _producer.get("port") is not None
-        and report.get("newmove_one") is not None
-    ):
-        return report["newmove_one"]["ports"]["in" + producer["port"]]
 
 
 def process_producers(report: dict) -> None:
