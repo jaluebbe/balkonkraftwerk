@@ -34,7 +34,7 @@ async def get_archived_datasets(
     date: str = Query("*", max_length=8, regex="^[*0-9]*$"),
 ) -> list[str]:
     datasets = [
-        _file.name.rstrip(".json")
+        _file.name.removesuffix(".json")
         for _file in LOG_DIRECTORY.glob(f"{category}_*_{date}.json")
     ]
     return datasets

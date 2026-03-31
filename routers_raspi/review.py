@@ -71,19 +71,23 @@ async def get_local_review(date: str):
 async def get_day_review(
     date: str = Query("*", regex="^[0-9]{8}$"),
 ):
-    redis_connection = aioredis.Redis(host=REDIS_HOST, decode_responses=True)
-    _key = f"power/review/day/{date}"
-    json_string = await redis_connection.get(_key)
-    if json_string is not None:
-        return Response(content=json_string, media_type="application/json")
-    _data = await get_local_review(date)
-    if _data is None:
-        raise HTTPException(status_code=504, detail="no response from source.")
-    elif not _data["success"]:
-        raise HTTPException(status_code=404, detail="no data available.")
-    await redis_connection.setex(
-        name=_key,
-        time=900,
-        value=orjson.dumps(_data, option=orjson.OPT_SERIALIZE_NUMPY),
-    )
+    async with aioredis.Redis(
+        host=REDIS_HOST, decode_responses=True
+    ) as redis_connection:
+        _key = f"power/review/day/{date}"
+        json_string = await redis_connection.get(_key)
+        if json_string is not None:
+            return Response(content=json_string, media_type="application/json")
+        _data = await get_local_review(date)
+        if _data is None:
+            raise HTTPException(
+                status_code=504, detail="no response from source."
+            )
+        elif not _data["success"]:
+            raise HTTPException(status_code=404, detail="no data available.")
+        await redis_connection.setex(
+            name=_key,
+            time=900,
+            value=orjson.dumps(_data, option=orjson.OPT_SERIALIZE_NUMPY),
+        )
     return ORJSONResponse(_data)
