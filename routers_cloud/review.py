@@ -19,7 +19,7 @@ def extract_email(request: Request):
 
 
 async def get_review_from_channel(
-    date: str, email: str, timeout: float = 10
+    date: str, email: str, timeout: float = 30
 ) -> dict | None:
     async with aioredis.Redis(
         host=REDIS_HOST, decode_responses=True
@@ -45,20 +45,25 @@ async def get_day_review(
     request: Request, date: str = Query("*", regex="^[0-9]{8}$")
 ):
     email = extract_email(request)
+
     async with aioredis.Redis(
         host=REDIS_HOST, decode_responses=True
     ) as redis_connection:
         _key = f"power/review/day/{date}:{email}"
+
         json_string = await redis_connection.get(_key)
         if json_string is not None:
             return Response(content=json_string, media_type="application/json")
+
         _data = await get_review_from_channel(date, email)
+
         if _data is None:
             raise HTTPException(
                 status_code=504, detail="no response from source."
             )
         elif not _data["success"]:
             raise HTTPException(status_code=404, detail="no data available.")
+
         await redis_connection.setex(
             name=_key,
             time=900,
