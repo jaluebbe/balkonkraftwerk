@@ -8,7 +8,7 @@ from shelly_devices import read_device
 
 if __name__ == "__main__":
     redis_connection = redis.Redis()
-    interval = 5
+    interval = 1
     old_time = None
     while True:
         _t_start = time.time()
