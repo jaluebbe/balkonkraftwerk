@@ -9,9 +9,7 @@ from inverters import process_inverters_readout, process_inverter_limit
 from battery import get_battery_status
 from newmove_one import read_newmove_one
 from unknown_consumers import process_unknown_consumers
-from tibber_price import tibber_price
 from config import (
-    tibber_api_key,
     min_power,
     newmove_one_host,
     consider_unknown_consumers,
@@ -37,8 +35,6 @@ def initialize_report():
 
 redis_connection = redis.Redis(decode_responses=True)
 hostname = socket.gethostname()
-if tibber_api_key is not None:
-    tp = tibber_price(tibber_api_key)
 
 while True:
     _report = initialize_report()
@@ -73,12 +69,8 @@ while True:
         if _report.get(_key) is not None:
             _report[_key] = round(_report[_key], 1)
     _key = "power:{}:{}".format(hostname, time.strftime("%Y%m%d"))
-    if tibber_api_key is not None:
-        tp.process_report(_report)
     _json_report = orjson.dumps(_report, option=orjson.OPT_SERIALIZE_NUMPY)
     redis_connection.set("required_power", _report["required"])
     redis_connection.lpush(_key, _json_report)
     redis_connection.publish("balkonkraftwerk", _json_report)
-    if tibber_api_key is not None and tp.account is None:
-        tp.setup()
     time.sleep(interval)
