@@ -17,9 +17,7 @@ def _get_charger_reference_inverter(report: dict) -> dict | None:
     if len(_inverters) != 1:
         return
     _inverter = _inverters[0]
-    if not "power" in _inverter and "ac_power" in _inverter:
-        _inverter["power"] = _inverter.pop("ac_power")
-    return _inverter
+    return {**_inverter, "power": _inverter["ac_power"]}
 
 
 def _get_charger_reference_producer(report: dict) -> dict | None:
