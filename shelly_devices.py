@@ -1,5 +1,6 @@
 from __future__ import annotations
 import logging
+import time
 import requests
 
 
@@ -29,8 +30,38 @@ def _filter_emeter(data: dict) -> dict | None:
     }
 
 
-def read_device(host: str, generation: int = 1) -> dict | None:
-    if generation == 1:
+def _read_device_gen2_3em(host: str) -> dict | None:
+    em_response = _perform_request(f"http://{host}/rpc/EM.GetStatus?id=0")
+    if em_response is None:
+        return None
+    return {
+        "id": host,
+        "utc": int(time.time()),
+        "power": em_response["total_act_power"],
+        "L1": {
+            "power": em_response["a_act_power"],
+            "current": em_response["a_current"],
+            "voltage": em_response["a_voltage"],
+        },
+        "L2": {
+            "power": em_response["b_act_power"],
+            "current": em_response["b_current"],
+            "voltage": em_response["b_voltage"],
+        },
+        "L3": {
+            "power": em_response.get(
+                "c_active_power", em_response.get("c_act_power")
+            ),
+            "current": em_response["c_current"],
+            "voltage": em_response["c_voltage"],
+        },
+    }
+
+
+def read_device(host: str, generation: int | str = 1) -> dict | None:
+    if generation == "2_3em":
+        return _read_device_gen2_3em(host)
+    elif generation == 1:
         url = f"http://{host}/status"
     elif generation == 2:
         url = f"http://{host}/rpc/Switch.GetStatus?id=0"

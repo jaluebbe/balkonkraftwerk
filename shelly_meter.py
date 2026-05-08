@@ -2,7 +2,7 @@
 import time
 import orjson
 import redis
-from config import shelly_3em_host
+from config import shelly_3em_host, shelly_3em_generation
 from shelly_devices import read_device
 
 
@@ -12,7 +12,9 @@ if __name__ == "__main__":
     old_time = None
     while True:
         _t_start = time.time()
-        _response = read_device(shelly_3em_host)
+        _response = read_device(
+            shelly_3em_host, generation=shelly_3em_generation
+        )
         if _response is None:
             time.sleep(1)
             continue
